@@ -3,23 +3,20 @@ use yew::prelude::*;
 
 #[function_component(App)]
 pub fn app() -> Html {
-    let counter = use_state(|| 0);
-    let inc = {
-        let counter = counter.clone();
-        Callback::from(move |_| counter.set(*counter + 1))
-    };
-    let dec = {
-        let counter = counter.clone();
-        Callback::from(move |_| counter.set(*counter - 1))
-    };
     html! {
-        <div>
-            <button onclick={inc}>{ "INC value" }</button>
-            <button onclick={dec}>{ "DED value" }</button>
-            <p>
-                <b>{ "Current value: " }</b>
-                { *counter }
-            </p>
+        <div class="sudoku-wrapper">
+            <div class="sudoku-grid">
+                { (0..9).map(|i|
+                    (0..9).map(|j| html! {
+                        <div
+                            class={format!("sudoku-cell sudoku-cell-{}-x sudoku-cell-x-{}", i, j)}
+                            id={format!("sudoku-cell-{}-{}", i, j)}
+                        >
+                            <div class="sudoku-cell-input" tabindex="0"></div>
+                        </div>
+                    }).collect::<Html>()
+                ).collect::<Html>() }
+            </div>
         </div>
     }
 }

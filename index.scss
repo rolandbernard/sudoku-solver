@@ -3,8 +3,72 @@ $background: #eeeeee;
 $paper: #ffffff;
 $darktext: #000000;
 $lighttext: #111111;
+$active: #4DA6FF;
 
 :root {
     background: $background;
+}
+
+:root, body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+}
+
+.sudoku-wrapper {
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+}
+
+.sudoku-grid {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    grid-template-rows: repeat(9, 1fr);
+    align-items: stretch;
+    justify-items: stretch;
+    width: 36rem;
+    height: 36rem;
+    border: 2px solid $darktext;
+}
+
+.sudoku-cell {
+    box-sizing: border-box;
+    border: 1px solid $darktext;
+    padding: 1px;
+}
+
+.sudoku-cell-input {
+    box-sizing: border-box;
+    appearance: none;
+    outline: none;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    background: $paper;
+    transition: border 100ms ease-in-out;
+    border: 1px solid $paper;
+    border-radius: 0.2em;
+}
+
+.sudoku-cell-input:hover {
+    cursor: pointer;
+    border: 1px solid $active;
+}
+
+.sudoku-cell-input:focus-within {
+    cursor: pointer;
+    border: 3px solid $active;
+}
+
+.sudoku-cell-x-2, .sudoku-cell-x-5 {
+    border-right: 2px solid $darktext;
+}
+
+.sudoku-cell-2-x, .sudoku-cell-5-x {
+    border-bottom: 2px solid $darktext;
 }
 
