@@ -1,5 +1,5 @@
 
 pub mod solver;
 pub mod domain;
-pub mod problem;
+pub mod sudoku;
 
