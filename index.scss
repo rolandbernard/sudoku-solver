@@ -2,7 +2,7 @@
 $background: #eeeeee;
 $paper: #ffffff;
 $darktext: #000000;
-$lighttext: #111111;
+$lighttext: #555555;
 $active: #4DA6FF;
 
 :root {
@@ -47,11 +47,16 @@ $active: #4DA6FF;
     outline: none;
     width: 100%;
     height: 100%;
-    text-align: center;
     background: $paper;
     transition: border 100ms ease-in-out;
     border: 1px solid $paper;
-    border-radius: 0.2em;
+    border-radius: 0.2rem;
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-family: 'Inter', sans-serif;
+    user-select: none;
 }
 
 .sudoku-cell-input:hover {

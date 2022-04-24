@@ -12,7 +12,7 @@ pub fn app() -> Html {
                             class={format!("sudoku-cell sudoku-cell-{}-x sudoku-cell-x-{}", i, j)}
                             id={format!("sudoku-cell-{}-{}", i, j)}
                         >
-                            <div class="sudoku-cell-input" tabindex="0"></div>
+                            <div class="sudoku-cell-input" tabindex="0">{(i + j) % 9 + 1}</div>
                         </div>
                     }).collect::<Html>()
                 ).collect::<Html>() }
