@@ -21,6 +21,7 @@ impl Problem {
         self.constraints.push(constraint);
     }
 
+    // Local domain consistency
     pub fn reduce_domains(&mut self) {
         let mut repeat = true;
         while repeat {
@@ -47,6 +48,7 @@ impl Problem {
         return copy;
     }
 
+    // Global satisfiability
     pub fn solve(&mut self) -> bool {
         self.reduce_domains();
         for v in &self.variables {
@@ -56,9 +58,9 @@ impl Problem {
         }
         for (i, v) in self.variables.iter().enumerate() {
             if !v.is_singelton() {
-                for i in v.clone() {
+                for j in v.clone() {
                     let mut copy = self.clone();
-                    copy.variables[i as usize] = DomainSet::singelton(i);
+                    copy.variables[i as usize] = DomainSet::singelton(j);
                     if copy.solve() {
                         self.variables = copy.variables;
                         return true;
@@ -76,6 +78,28 @@ impl Problem {
         } else {
             return None;
         }
+    }
+
+    // Global domain consistency
+    pub fn minimize_domains(&mut self) {
+        self.reduce_domains();
+        for (i, v) in self.variables.clone().iter().enumerate() {
+            if !v.is_empty() && !v.is_singelton() {
+                for j in v.clone() {
+                    let mut copy = self.clone();
+                    copy.variables[i as usize] = DomainSet::singelton(j);
+                    if !copy.solve() {
+                        self.variables[i].remove(j);
+                    }
+                }
+            }
+        }
+    }
+
+    pub fn minimized_domains(&mut self) -> Problem {
+        let mut copy = self.clone();
+        copy.minimize_domains();
+        return copy;
     }
 }
 
