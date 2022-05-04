@@ -283,6 +283,9 @@ checksum = "eb703cfe953bccee95685111adeedb76fabe4e97549a58d16f03ea7b9367bb32"
 name = "sudoku"
 version = "0.1.0"
 dependencies = [
+ "js-sys",
+ "wasm-bindgen",
+ "web-sys",
  "yew",
 ]
 
