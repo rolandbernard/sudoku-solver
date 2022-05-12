@@ -16,6 +16,47 @@ $active: #4DA6FF;
     padding: 0;
 }
 
+* {
+    font-family: 'Inter', sans-serif;
+}
+
+.app {
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 1fr min-content 1fr;
+
+    .page-title {
+        font-size: clamp(0px, 2.75rem, 10vw);
+        display: grid;
+        align-content: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    .page-footer {
+        font-size: clamp(0px, 0.9rem, 5vw);
+        display: grid;
+        align-content: flex-end;
+        justify-content: center;
+
+        a {
+            display: flex;
+            flex-flow: row nowrap;
+            padding: 1rem;
+            align-items: center;
+            color: $lighttext;
+
+            svg {
+                width: clamp(0px, 1.5rem, 10vw);
+                margin-right: 0.5rem;
+            }
+        }
+    }
+}
+
 .sudoku-wrapper {
     display: grid;
     align-content: center;
@@ -30,8 +71,10 @@ $active: #4DA6FF;
     grid-template-rows: repeat(9, 1fr);
     align-items: stretch;
     justify-items: stretch;
-    width: 36rem;
-    height: 36rem;
+    width: 75vw;
+    height: 75vw;
+    max-width: 75vh;
+    max-height: 75vh;
     border: 2px solid $darktext;
 }
 
@@ -64,20 +107,19 @@ $active: #4DA6FF;
     display: grid;
     align-content: center;
     justify-content: center;
-    font-size: 2rem;
-    font-family: 'Inter', sans-serif;
+    font-size: min(5vw, 5vh);
     user-select: none;
     border: 0px solid $active;
-}
 
-.sudoku-cell-input:hover {
-    cursor: pointer;
-    border: 1px solid $active;
-}
-
-.sudoku-cell-input:focus-within {
-    cursor: pointer;
-    border: 3px solid $active;
+    &:hover {
+        cursor: pointer;
+        border: 1px solid $active;
+    }
+    
+    &:focus-within {
+        cursor: pointer;
+        border: 3px solid $active;
+    }
 }
 
 .sudoku-cell-x-2, .sudoku-cell-x-5 {
