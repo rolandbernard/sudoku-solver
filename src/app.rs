@@ -103,7 +103,7 @@ pub fn app() -> Html {
                 {"Sudoku solver"}
             </div>
             <div class="sudoku-wrapper">
-                <div class="sudoku-grid">
+                <div class={classes!("sudoku-grid", Some("sudoku-solving"))}>
                     { (0..9).map(|r|
                         (0..9).map(|c| html! {
                             <div

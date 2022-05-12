@@ -65,6 +65,20 @@ $active: #4DA6FF;
     height: 100%;
 }
 
+@keyframes solving-animation {
+    0%, 100% {
+        outline: 0px solid rgba($active, 0.0);
+        outline-offset: 0px;
+    }
+    20% {
+        outline: 1vw solid rgba($active, 0.5);
+    }
+    50% {
+        outline: 1vw solid rgba($active, 0.25);
+        outline-offset: 0.5vw;
+    }
+}
+
 .sudoku-grid {
     display: grid;
     grid-template-columns: repeat(9, 1fr);
@@ -76,6 +90,10 @@ $active: #4DA6FF;
     max-width: 75vh;
     max-height: 75vh;
     border: 2px solid $darktext;
+
+    &.sudoku-solving {
+        animation: solving-animation 750ms ease-in-out infinite;
+    }
 }
 
 .sudoku-cell {
