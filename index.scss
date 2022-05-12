@@ -110,6 +110,7 @@ $active: #4DA6FF;
     font-size: min(5vw, 5vh);
     user-select: none;
     border: 0px solid $active;
+    caret-color: transparent;
 
     &:hover {
         cursor: pointer;

@@ -74,6 +74,16 @@ pub fn app() -> Html {
         cells.push(row);
     }
     let sudoku = use_state(|| [[Option::<u32>::None; 9]; 9]);
+    let handle_keyevent = |r, c| {
+        let sudoku = sudoku.clone();
+        let cells = cells.clone();
+        Callback::from(move |e| {
+            sudoku.set(sudoku_change(*sudoku, r, c, &e));
+            focus_change(&cells, r, c, &e);
+            e.prevent_default();
+            e.stop_propagation();
+        })
+    };
     html! {
         <div class="app">
             <div class="page-title">
@@ -85,22 +95,14 @@ pub fn app() -> Html {
                         (0..9).map(|c| html! {
                             <div
                                 class={format!("sudoku-cell sudoku-cell-{}-x sudoku-cell-x-{}", r, c)}
-                                id={format!("sudoku-cell-{}-{}", r, c)}
+                                id={format!("sudoku-cell-{}-{}", r, c)} onkeydown={handle_keyevent(r, c)}
                             >
                                 <div class="sudoku-cell-result"></div>
-                                <div class="sudoku-cell-input" tabindex="0" contenteditable="true" ref={cells[r][c].clone()} onkeydown={
-                                    let sudoku = sudoku.clone();
-                                    let cells = cells.clone();
-                                    Callback::from(move |e| {
-                                        sudoku.set(sudoku_change(*sudoku, r, c, &e));
-                                        focus_change(&cells, r, c, &e);
-                                        e.prevent_default();
-                                    })
-                                }>{
+                                <div class="sudoku-cell-input" tabindex="0" type="number" ref={cells[r][c].clone()}>{
                                     if let Some(v) = sudoku[r][c] {
-                                        html! { {v} }
+                                        v.to_string()
                                     } else {
-                                        html! { }
+                                        "".to_owned()
                                     }
                                 }</div>
                             </div>
