@@ -3,7 +3,7 @@ use std::ops::{BitAnd, BitOr, Not, Range};
 
 #[derive(Clone, Copy)]
 pub struct DomainSet {
-    bitset: u32,
+    pub bitset: u32,
 }
 
 impl DomainSet {
@@ -50,11 +50,19 @@ impl DomainSet {
     }
 
     pub fn is_singelton(&self) -> bool {
-        self.bitset & (!self.bitset + 1) == self.bitset
+        self.bitset.is_power_of_two()
     }
 
     pub fn is_empty(&self) -> bool {
         self.bitset == 0
+    }
+    
+    pub fn get_any(&self) -> Option<u32> {
+        if self.is_empty() {
+            None
+        } else {
+            Some(self.bitset.trailing_zeros())
+        }
     }
 }
 
@@ -87,15 +95,10 @@ impl Iterator for DomainSet {
 
     fn next(&mut self) -> Option<Self::Item> {
         if self.is_empty() {
-            return None
+            return None;
         } else {
-            let mut last = !self.bitset + 1;
-            self.bitset &= !last;
-            let mut i = 0;
-            while last > 1 {
-                last /= 2;
-                i += 1;
-            }
+            let i = self.bitset.trailing_zeros();
+            self.remove(i);
             return Some(i);
         }
     }

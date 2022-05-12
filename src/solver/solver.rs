@@ -3,8 +3,8 @@ use super::domain::DomainSet;
 
 #[derive(Clone)]
 pub struct Problem {
-    variables: Vec<DomainSet>,
-    constraints: Vec<Vec<usize>>,
+    pub variables: Vec<DomainSet>,
+    pub constraints: Vec<Vec<usize>>,
 }
 
 impl Problem {

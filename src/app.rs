@@ -1,8 +1,7 @@
 
 use yew::prelude::*;
 use web_sys::HtmlElement;
-
-type Sudoku = [[Option<u32>; 9]; 9];
+use super::solver::sudoku::{Sudoku, create_problem, read_solution};
 
 fn sudoku_change(mut sudoku: Sudoku, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku {
     let key = event.key_code();
@@ -63,6 +62,14 @@ fn focus_change(cells: &Vec<Vec<NodeRef>>, row: usize, col: usize, event: &Keybo
     }
 }
 
+fn solve_sudoku(mut sudoku: Sudoku) -> Sudoku {
+    let mut prob = create_problem(&sudoku);
+    if prob.solve() {
+        read_solution(&mut sudoku, &prob);
+    }
+    return sudoku;
+}
+
 #[function_component(App)]
 pub fn app() -> Html {
     let mut cells = Vec::new();
@@ -82,6 +89,12 @@ pub fn app() -> Html {
             focus_change(&cells, r, c, &e);
             e.prevent_default();
             e.stop_propagation();
+        })
+    };
+    let try_solving = {
+        let sudoku = sudoku.clone();
+        Callback::from(move |_| {
+            sudoku.set(solve_sudoku(*sudoku));
         })
     };
     html! {
@@ -109,6 +122,7 @@ pub fn app() -> Html {
                         }).collect::<Html>()
                     ).collect::<Html>() }
                 </div>
+                <button onclick={try_solving}>{"Solve"}</button>
             </div>
             <div class="page-footer">
                 <a rel="noreferrer" href="https://github.com/rolandbernard/sudoku-solver">
@@ -117,7 +131,7 @@ pub fn app() -> Html {
                             <path d="m -34.562409,-5.0218832 c -8.995,0 -16.288,-7.2929998 -16.288,-16.2899998 0,-7.197 4.667,-13.302 11.14,-15.457 0.815,-0.149 1.112,0.354 1.112,0.786 0,0.386 -0.014,1.411 -0.022,2.77 -4.531,-0.984 -5.487,2.184 -5.487,2.184 -0.741,1.882 -1.809,2.383 -1.809,2.383 -1.479,1.01 0.112,0.99 0.112,0.99 1.635,-0.115 2.495,-1.679 2.495,-1.679 1.453,-2.489 3.813,-1.77 4.741,-1.353 0.148,1.052 0.568,1.77 1.034,2.177 -3.617,0.411 -7.42,1.809 -7.42,8.051 0,1.778 0.635,3.232 1.677,4.371 -0.168,0.412 -0.727,2.068 0.159,4.311 0,0 1.368,0.438 4.48,-1.67 1.299,0.362 2.693,0.542 4.078,0.548 1.383,-0.006 2.777,-0.186 4.078,-0.548 3.11,2.108 4.475,1.67 4.475,1.67 0.889,-2.243 0.33,-3.899 0.162,-4.311 1.044,-1.139 1.675,-2.593 1.675,-4.371 0,-6.258 -3.809,-7.635 -7.438,-8.038 0.585,-0.503 1.106,-1.497 1.106,-3.017 0,-2.177 -0.02,-3.934 -0.02,-4.468 0,-0.436 0.293,-0.943 1.12,-0.784 6.468,2.159 11.131,8.26 11.131,15.455 0,8.997 -7.294,16.2899998 -16.291,16.2899998" style="fill-opacity:1;fill-rule:evenodd;stroke:none"></path>
                         </g>
                     </svg>
-                    <span>{ "GitHub" }</span>
+                    <span>{"GitHub"}</span>
                 </a>
             </div>
         </div>
