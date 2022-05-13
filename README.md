@@ -3,13 +3,27 @@ Sudoku solver
 =============
 
 This is a very simple web app for solving Sudoku problems.
-This is more just an experiment for me to try out the [Yew](https://yew.rs/) framework
+This is more just an experiment for me to try out the [Yew](https://yew.rs/) framework.
 
 ## Development
 
+You will have to install [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
+and [Trunk](https://trunkrs.dev/#install).
+
+### Running
+
+To start a development server run the following command in the root directory of this repository.
+```sh
+trunk serve
+```
+
 ### Building
 
-
+To build a release version of the application run the following command, replacing `<PUBLIC_URL>`
+with the public URL will be served from (the default is `/`):
+```sh
+trunk build --release --public-url <PUBLIC_URL>
+```
 
 ### Files
 
