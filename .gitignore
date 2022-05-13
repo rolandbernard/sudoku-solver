@@ -2,3 +2,4 @@
 .vim/
 /target
 /dist
+tmp.*
