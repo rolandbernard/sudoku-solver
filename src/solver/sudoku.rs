@@ -7,8 +7,15 @@ pub fn empty_sudoku() -> Sudoku {
     [[Option::<u32>::None; 9]; 9]
 }
 
+pub fn cell_domain(problem: &Problem, row: usize, col: usize) -> DomainSet {
+    problem.variables[9*row + col]
+}
+
 pub fn create_problem(sudoku: &Sudoku) -> Problem {
-    let mut prob = Problem::empty();
+    let mut prob = Problem {
+        variables: Vec::with_capacity(9*9),
+        constraints: Vec::with_capacity(3*9),
+    };
     for row in sudoku {
         for cel in row {
             if let Some(v) = cel {

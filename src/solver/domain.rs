@@ -1,7 +1,8 @@
 
+use serde::{Deserialize, Serialize};
 use std::ops::{BitAnd, BitOr, Not, Range};
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Serialize, Deserialize)]
 pub struct DomainSet {
     pub bitset: u32,
 }

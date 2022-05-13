@@ -1,7 +1,9 @@
 
+use serde::{Deserialize, Serialize};
+
 use super::domain::DomainSet;
 
-#[derive(Clone)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Problem {
     pub variables: Vec<DomainSet>,
     pub constraints: Vec<Vec<usize>>,
@@ -66,6 +68,7 @@ impl Problem {
                         return true;
                     }
                 }
+                return false;
             }
         }
         return true;

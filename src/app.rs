@@ -4,7 +4,7 @@ use yew_agent::use_bridge;
 use web_sys::HtmlElement;
 
 use crate::solver::sudoku::{Sudoku, empty_sudoku};
-use crate::agent::{Worker, WorkerInput};
+use crate::workers::{SolvingWorker};
 
 fn sudoku_change(mut sudoku: Sudoku, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku {
     let key = event.key_code();
@@ -69,11 +69,11 @@ fn focus_change(cells: &Vec<Vec<NodeRef>>, row: usize, col: usize, event: &Keybo
 pub fn app() -> Html {
     let state = use_state(|| "sudoku-idle");
     let sudoku = use_state(|| empty_sudoku());
-    let solver_bridge = use_bridge::<Worker, _>({
+    let solver_bridge = use_bridge::<SolvingWorker, _>({
         let state = state.clone();
         let sudoku = sudoku.clone();
         move |sol| {
-            sudoku.set(sol.sudoku);
+            sudoku.set(sol);
             state.set("sudoku-idle");
         }
     });
@@ -83,7 +83,7 @@ pub fn app() -> Html {
         Callback::from(move |_| {
             if *state == "sudoku-idle" {
                 state.set("sudoku-solving");
-                solver_bridge.send(WorkerInput { sudoku: *sudoku });
+                solver_bridge.send(*sudoku);
             }
         })
     };

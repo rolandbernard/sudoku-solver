@@ -1,8 +1,8 @@
 
 use yew_agent::Threaded;
-use sudoku::agent::Worker;
+use sudoku::workers::SolvingWorker;
 
 fn main() {
-    Worker::register();
+    SolvingWorker::register();
 }
 
