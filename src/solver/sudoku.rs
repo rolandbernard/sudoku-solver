@@ -1,5 +1,5 @@
 
-use super::{solver::Problem, domain::DomainSet};
+use crate::solver::{solver::Problem, domain::DomainSet};
 
 pub type Sudoku = [[Option<u32>; 9]; 9];
 
@@ -26,9 +26,9 @@ pub fn create_problem(sudoku: &Sudoku) -> Problem {
         }
     }
     for i in 0..9 {
-        let mut row = Vec::new();
-        let mut col = Vec::new();
-        let mut cell = Vec::new();
+        let mut row = Vec::with_capacity(9);
+        let mut col = Vec::with_capacity(9);
+        let mut cell = Vec::with_capacity(9);
         for j in 0..9 {
             row.push(9 * i + j);
             col.push(9 * j + i);

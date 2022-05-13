@@ -1,17 +1,16 @@
 
 use yew::prelude::*;
 
-mod sudoku;
-use sudoku::SudokuComponent;
+use crate::components::sudoku_solver::SudokuSolver;
 
 #[function_component(App)]
 pub fn app() -> Html {
     html! {
         <div class="app">
             <div class="page-title">
-                {"Sudoku solver"}
+                {"Sudoku Solver"}
             </div>
-            <SudokuComponent />
+            <SudokuSolver />
             <div class="page-footer">
                 <a rel="noreferrer" href="https://github.com/rolandbernard/sudoku-solver">
                     <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 11.641667 11.641667" version="1.1">

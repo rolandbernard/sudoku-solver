@@ -57,7 +57,7 @@ $active: #4DA6FF;
     }
 }
 
-.sudoku-wrapper {
+.sudoku-solver {
     display: grid;
     align-content: center;
     justify-content: center;
@@ -91,7 +91,7 @@ $active: #4DA6FF;
     max-height: 75vh;
     border: 2px solid $darktext;
 
-    &.sudoku-solving {
+    &.sudoku-working {
         animation: solving-animation 750ms ease-in-out infinite;
     }
 }

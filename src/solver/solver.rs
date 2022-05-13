@@ -1,7 +1,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use super::domain::DomainSet;
+use crate::solver::domain::DomainSet;
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Problem {

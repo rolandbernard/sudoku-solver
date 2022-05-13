@@ -4,15 +4,19 @@
 <head>
     <meta charset="utf-8" />
     <title>Sudoku Solver</title>
-    <link data-trunk rel="sass" href="index.scss" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" href="public/favicon.ico" />
     <meta name="theme-color" content="#000000" />
     <meta http-equiv="x-ua-compatible" content="ie=edge">
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet"> 
+
+    <base data-trunk-public-url />
+
+    <link data-trunk rel="sass" href="scss/index.scss" />
+    <link data-trunk rel="copy-dir" href="public/" />
 
     <link data-trunk rel="rust" href="Cargo.toml" data-bin="main" data-type="main" />
     <link data-trunk rel="rust" href="Cargo.toml" data-bin="worker" data-type="worker" />

@@ -1,7 +1,7 @@
 
 use yew_agent::{HandlerId, Public, Agent, AgentLink};
 
-use crate::solver::{sudoku::{*, self}, solver::*};
+use crate::solver::{sudoku::*, solver::*};
 
 pub struct SolvingWorker {
     link: AgentLink<Self>,

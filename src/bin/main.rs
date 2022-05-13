@@ -1,5 +1,5 @@
 
 fn main() {
-    yew::start_app::<sudoku::app::App>();
+    yew::start_app::<sudoku::components::app::App>();
 }
 
