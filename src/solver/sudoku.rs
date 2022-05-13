@@ -3,6 +3,10 @@ use super::{solver::Problem, domain::DomainSet};
 
 pub type Sudoku = [[Option<u32>; 9]; 9];
 
+pub fn empty_sudoku() -> Sudoku {
+    [[Option::<u32>::None; 9]; 9]
+}
+
 pub fn create_problem(sudoku: &Sudoku) -> Problem {
     let mut prob = Problem::empty();
     for row in sudoku {

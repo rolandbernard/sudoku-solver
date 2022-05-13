@@ -1,7 +1,10 @@
 
 use yew::prelude::*;
+use yew_agent::use_bridge;
 use web_sys::HtmlElement;
-use super::solver::sudoku::{Sudoku, create_problem, read_solution};
+
+use crate::solver::sudoku::{Sudoku, empty_sudoku};
+use crate::agent::{Worker, WorkerInput};
 
 fn sudoku_change(mut sudoku: Sudoku, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku {
     let key = event.key_code();
@@ -62,16 +65,28 @@ fn focus_change(cells: &Vec<Vec<NodeRef>>, row: usize, col: usize, event: &Keybo
     }
 }
 
-fn solve_sudoku(mut sudoku: Sudoku) -> Sudoku {
-    let mut prob = create_problem(&sudoku);
-    if prob.solve() {
-        read_solution(&mut sudoku, &prob);
-    }
-    return sudoku;
-}
-
 #[function_component(App)]
 pub fn app() -> Html {
+    let state = use_state(|| "sudoku-idle");
+    let sudoku = use_state(|| empty_sudoku());
+    let solver_bridge = use_bridge::<Worker, _>({
+        let state = state.clone();
+        let sudoku = sudoku.clone();
+        move |sol| {
+            sudoku.set(sol.sudoku);
+            state.set("sudoku-idle");
+        }
+    });
+    let handle_solve = {
+        let sudoku = sudoku.clone();
+        let state = state.clone();
+        Callback::from(move |_| {
+            if *state == "sudoku-idle" {
+                state.set("sudoku-solving");
+                solver_bridge.send(WorkerInput { sudoku: *sudoku });
+            }
+        })
+    };
     let mut cells = Vec::new();
     for _ in 0..9 {
         let mut row = Vec::new();
@@ -80,7 +95,6 @@ pub fn app() -> Html {
         }
         cells.push(row);
     }
-    let sudoku = use_state(|| [[Option::<u32>::None; 9]; 9]);
     let handle_keyevent = |r, c| {
         let sudoku = sudoku.clone();
         let cells = cells.clone();
@@ -91,19 +105,13 @@ pub fn app() -> Html {
             e.stop_propagation();
         })
     };
-    let try_solving = {
-        let sudoku = sudoku.clone();
-        Callback::from(move |_| {
-            sudoku.set(solve_sudoku(*sudoku));
-        })
-    };
     html! {
         <div class="app">
             <div class="page-title">
                 {"Sudoku solver"}
             </div>
             <div class="sudoku-wrapper">
-                <div class={classes!("sudoku-grid", Some("sudoku-solving"))}>
+                <div class={classes!("sudoku-grid", *state)}>
                     { (0..9).map(|r|
                         (0..9).map(|c| html! {
                             <div
@@ -122,7 +130,7 @@ pub fn app() -> Html {
                         }).collect::<Html>()
                     ).collect::<Html>() }
                 </div>
-                <button onclick={try_solving}>{"Solve"}</button>
+                <button onclick={handle_solve}>{"Solve"}</button>
             </div>
             <div class="page-footer">
                 <a rel="noreferrer" href="https://github.com/rolandbernard/sudoku-solver">

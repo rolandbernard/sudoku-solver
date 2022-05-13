@@ -1,7 +1,8 @@
 
 use serde::{Deserialize, Serialize};
 use yew_agent::{HandlerId, Public, Agent, AgentLink};
-use super::solver::sudoku::{Sudoku, create_problem, read_solution};
+
+use crate::solver::sudoku::{Sudoku, create_problem, read_solution};
 
 pub struct Worker {
     link: AgentLink<Self>,
