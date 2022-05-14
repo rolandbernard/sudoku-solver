@@ -1,0 +1,40 @@
+
+@use 'vars.scss';
+
+.app {
+    display: grid;
+    align-content: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    grid-template-rows: 1fr min-content 1fr;
+
+    .page-title {
+        font-size: clamp(0px, 2.75rem, 10vw);
+        display: grid;
+        align-content: center;
+        justify-content: center;
+        white-space: nowrap;
+    }
+
+    .page-footer {
+        font-size: clamp(0px, 0.9rem, 5vw);
+        display: grid;
+        align-content: flex-end;
+        justify-content: center;
+
+        a {
+            display: flex;
+            flex-flow: row nowrap;
+            padding: 1rem;
+            align-items: center;
+            color: vars.$lighttext;
+
+            svg {
+                width: clamp(0px, 1.5rem, 10vw);
+                margin-right: 0.5rem;
+            }
+        }
+    }
+}
+

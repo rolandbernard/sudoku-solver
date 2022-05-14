@@ -41,7 +41,7 @@ pub fn sudoku_solver() -> Html {
     html! {
         <div class="sudoku-solver">
             <SudokuInput sudoku={*sudoku} working={*working} {on_change} />
-            <div class="sudoku-solver-buttons">
+            <div class="button-row">
                 <button onclick={handle_solve}>{"Solve"}</button>
                 <button onclick={handle_clear}>{"Clear"}</button>
             </div>
