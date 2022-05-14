@@ -28,6 +28,12 @@ pub fn sudoku_solver() -> Html {
             }
         })
     };
+    let handle_clear = {
+        let sudoku = sudoku.clone();
+        Callback::from(move |_| {
+            sudoku.set(empty_sudoku());
+        })
+    };
     let on_change = {
         let sudoku = sudoku.clone();
         Callback::from(move |new| sudoku.set(new))
@@ -35,7 +41,10 @@ pub fn sudoku_solver() -> Html {
     html! {
         <div class="sudoku-solver">
             <SudokuInput sudoku={*sudoku} working={*working} {on_change} />
-            <button onclick={handle_solve}>{"Solve"}</button>
+            <div class="sudoku-solver-buttons">
+                <button onclick={handle_solve}>{"Solve"}</button>
+                <button onclick={handle_clear}>{"Clear"}</button>
+            </div>
         </div>
     }
 }
