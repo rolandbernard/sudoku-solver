@@ -2,7 +2,7 @@
 use yew::{prelude::*, Properties};
 use web_sys::HtmlElement;
 
-use crate::solver::sudoku::Sudoku;
+use crate::solver::sudoku::{Sudoku, SudokuDomains, empty_domains};
 
 fn sudoku_change(mut sudoku: Sudoku, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku {
     let key = event.key_code();
@@ -46,6 +46,8 @@ fn focus_change(cells: &Vec<Vec<NodeRef>>, row: usize, col: usize, event: &Keybo
 #[derive(Properties, PartialEq)]
 pub struct Props {
     pub sudoku: Sudoku,
+    #[prop_or(empty_domains())]
+    pub domains: SudokuDomains,
     #[prop_or(false)]
     pub working: bool,
     pub on_change: Callback<Sudoku>,
@@ -53,7 +55,7 @@ pub struct Props {
 
 #[function_component(SudokuInput)]
 pub fn sudoku_input(props: &Props) -> Html {
-    let Props {sudoku, working, on_change} = props;
+    let Props {sudoku, domains, working, on_change} = props;
     let selected = use_state(|| None);
     let mut cells = Vec::new();
     for _ in 0..9 {
@@ -92,38 +94,42 @@ pub fn sudoku_input(props: &Props) -> Html {
         grid_classes.push("sudoku-working");
     }
     html! {
-        <div class={classes!("sudoku-grid", grid_classes)} {onkeydown} {onblur}>
-            { (0..9).map(|r|
-                (0..9).map(|c| {
-                    let mut cell_classes = Vec::with_capacity(4);
-                    cell_classes.push(format!("sudoku-cell-{}-x", r));
-                    cell_classes.push(format!("sudoku-cell-x-{}", c));
-                    if let Some((sr, sc)) = *selected {
-                        if (r, c) == (sr, sc) {
-                            cell_classes.push("sudoku-cell-selected".to_owned());
+        <div class={classes!("sudoku-grid-wrapper", grid_classes)}>
+            <div class="sudoku-grid" {onkeydown} {onblur}>
+                { (0..9).map(|r|
+                    (0..9).map(|c| {
+                        let mut cell_classes = Vec::with_capacity(5);
+                        cell_classes.push(format!("sudoku-cell-{}-x", r));
+                        cell_classes.push(format!("sudoku-cell-x-{}", c));
+                        if let Some((sr, sc)) = *selected {
+                            if (r, c) == (sr, sc) {
+                                cell_classes.push("sudoku-cell-selected".to_owned());
+                            }
+                            if r == sr || c == sc || (r / 3, c / 3) == (sr / 3, sc / 3) {
+                                cell_classes.push("sudoku-cell-constraint".to_owned());
+                            }
                         }
-                        if r == sr || c == sc || (r / 3, c / 3) == (sr / 3, sc / 3) {
-                            cell_classes.push("sudoku-cell-constraint".to_owned());
+                        html! {
+                            <div
+                                id={format!("sudoku-cell-{}-{}", r, c)}
+                                class={classes!("sudoku-cell", cell_classes)}
+                                onfocus={onclick(r, c)}
+                            >
+                                <div class={classes!("sudoku-cell-result", format!("sudoku-results-{}", domains[r][c].len()))}>
+                                    { domains[r][c].clone().map(|e| html!{ <div>{(e + 1).to_string()}</div> }).collect::<Html>() }
+                                </div>
+                                <div class="sudoku-cell-input" tabindex="0" type="number" ref={cells[r][c].clone()}>{
+                                    if let Some(v) = sudoku[r][c] {
+                                        v.to_string()
+                                    } else {
+                                        "".to_owned()
+                                    }
+                                }</div>
+                            </div>
                         }
-                    }
-                    html! {
-                        <div
-                            id={format!("sudoku-cell-{}-{}", r, c)}
-                            class={classes!("sudoku-cell", cell_classes)}
-                            onfocus={onclick(r, c)}
-                        >
-                            <div class="sudoku-cell-result"></div>
-                            <div class="sudoku-cell-input" tabindex="0" type="number" ref={cells[r][c].clone()}>{
-                                if let Some(v) = sudoku[r][c] {
-                                    v.to_string()
-                                } else {
-                                    "".to_owned()
-                                }
-                            }</div>
-                        </div>
-                    }
-                }).collect::<Html>()
-            ).collect::<Html>() }
+                    }).collect::<Html>()
+                ).collect::<Html>() }
+            </div>
         </div>
     }
 }

@@ -35,6 +35,10 @@
                 cursor: pointer;
                 border: 1px solid vars.$active;
             }
+
+            &:disabled {
+                border: 1px solid transparent;
+            }
         }
     }
 }

@@ -2,9 +2,14 @@
 use crate::solver::{solver::Problem, domain::DomainSet};
 
 pub type Sudoku = [[Option<u32>; 9]; 9];
+pub type SudokuDomains = [[DomainSet; 9]; 9];
 
 pub fn empty_sudoku() -> Sudoku {
     [[Option::<u32>::None; 9]; 9]
+}
+
+pub fn empty_domains() -> SudokuDomains {
+    [[DomainSet::empty(); 9]; 9]
 }
 
 pub fn cell_domain(problem: &Problem, row: usize, col: usize) -> DomainSet {
@@ -61,5 +66,15 @@ pub fn read_solution(sudoku: &mut Sudoku, problem: &Problem) {
             sudoku[i][j] = problem.variables[9*i + j].get_any().and_then(|x| Some(x + 1));
         }
     }
+}
+
+pub fn extract_domains(problem: &Problem) -> SudokuDomains {
+    let mut domains = empty_domains();
+    for i in 0..9 {
+        for j in 0..9 {
+            domains[i][j] = problem.variables[9*i + j];
+        }
+    }
+    return domains;
 }
 

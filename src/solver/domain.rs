@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use std::ops::{BitAnd, BitOr, Not, Range};
 
-#[derive(Clone, Copy, Serialize, Deserialize)]
+#[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct DomainSet {
     pub bitset: u32,
 }
@@ -64,6 +64,10 @@ impl DomainSet {
         } else {
             Some(self.bitset.trailing_zeros())
         }
+    }
+
+    pub fn len(&self) -> usize {
+        self.bitset.count_ones() as usize
     }
 }
 

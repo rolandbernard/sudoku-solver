@@ -28,7 +28,33 @@ impl Agent for SolvingWorker {
     }
 
     fn name_of_resource() -> &'static str {
-        "worker.js"
+        "worker_solve.js"
+    }
+}
+
+pub struct ReducingWorker {
+    link: AgentLink<Self>,
+}
+
+impl Agent for ReducingWorker {
+    type Input = Problem;
+    type Message = ();
+    type Output = Problem;
+    type Reach = Public<Self>;
+
+    fn create(link: AgentLink<Self>) -> Self {
+        Self { link }
+    }
+
+    fn update(&mut self, _msg: Self::Message) {}
+
+    fn handle_input(&mut self, mut problem: Self::Input, id: HandlerId) {
+        problem.reduce_domains();
+        self.link.respond(id, problem);
+    }
+
+    fn name_of_resource() -> &'static str {
+        "worker_reduce.js"
     }
 }
 
