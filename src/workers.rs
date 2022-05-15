@@ -1,7 +1,7 @@
 
 use yew_agent::{HandlerId, Public, Agent, AgentLink};
 
-use crate::solver::{sudoku::*, solver::*};
+use crate::solver::sudoku::*;
 
 pub struct SolvingWorker {
     link: AgentLink<Self>,
@@ -10,7 +10,7 @@ pub struct SolvingWorker {
 impl Agent for SolvingWorker {
     type Input = Sudoku;
     type Message = ();
-    type Output = Sudoku;
+    type Output = Option<Sudoku>;
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -19,12 +19,11 @@ impl Agent for SolvingWorker {
 
     fn update(&mut self, _msg: Self::Message) {}
 
-    fn handle_input(&mut self, mut sudoku: Self::Input, id: HandlerId) {
-        let mut prob = create_problem(&sudoku);
-        if prob.solve() {
-            read_solution(&mut sudoku, &prob);
-        }
-        self.link.respond(id, sudoku);
+    fn handle_input(&mut self, sudoku: Self::Input, id: HandlerId) {
+        let prob = create_problem(&sudoku);
+        let result = prob.find_model()
+            .and_then(|v| Some(resize_variables(v)));
+        self.link.respond(id, result);
     }
 
     fn name_of_resource() -> &'static str {
@@ -37,9 +36,9 @@ pub struct ReducingWorker {
 }
 
 impl Agent for ReducingWorker {
-    type Input = Problem;
+    type Input = Sudoku;
     type Message = ();
-    type Output = Problem;
+    type Output = SudokuDomains;
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -48,9 +47,10 @@ impl Agent for ReducingWorker {
 
     fn update(&mut self, _msg: Self::Message) {}
 
-    fn handle_input(&mut self, mut problem: Self::Input, id: HandlerId) {
-        problem.reduce_domains();
-        self.link.respond(id, problem);
+    fn handle_input(&mut self, sudoku: Self::Input, id: HandlerId) {
+        let prob = create_problem(&sudoku);
+        let result = resize_domains(prob.reduce_domains());
+        self.link.respond(id, result);
     }
 
     fn name_of_resource() -> &'static str {

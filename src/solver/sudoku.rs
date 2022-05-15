@@ -12,15 +12,12 @@ pub fn empty_domains() -> SudokuDomains {
     [[DomainSet::empty(); 9]; 9]
 }
 
-pub fn cell_domain(problem: &Problem, row: usize, col: usize) -> DomainSet {
-    problem.variables[9*row + col]
+pub fn default_domains() -> SudokuDomains {
+    [[DomainSet::range(0..9); 9]; 9]
 }
 
 pub fn create_problem(sudoku: &Sudoku) -> Problem {
-    let mut prob = Problem {
-        variables: Vec::with_capacity(9*9),
-        constraints: Vec::with_capacity(3*9),
-    };
+    let mut prob = Problem::with_capacity(9*9, 3*9);
     for row in sudoku {
         for cel in row {
             if let Some(v) = cel {
@@ -48,33 +45,19 @@ pub fn create_problem(sudoku: &Sudoku) -> Problem {
     return prob;
 }
 
-pub fn update_variables(sudoku: &Sudoku, problem: &mut Problem) {
-    for (i, row) in sudoku.iter().enumerate() {
-        for (j, cel) in row.iter().enumerate() {
-            if let Some(v) = cel {
-                problem.variables[9*i + j] = DomainSet::singelton(*v);
-            } else {
-                problem.variables[9*i + j] = DomainSet::range(0..9);
-            }
-        }
+pub fn resize_variables(variables: Vec<u32>) -> Sudoku {
+    let mut res = empty_sudoku();
+    for (i, v) in variables.iter().enumerate() {
+        res[i / 9][i % 9] = Some(*v + 1);
     }
+    return res;
 }
 
-pub fn read_solution(sudoku: &mut Sudoku, problem: &Problem) {
-    for i in 0..9 {
-        for j in 0..9 {
-            sudoku[i][j] = problem.variables[9*i + j].get_any().and_then(|x| Some(x + 1));
-        }
+pub fn resize_domains(domains: Vec<DomainSet>) -> SudokuDomains {
+    let mut res = empty_domains();
+    for (i, v) in domains.iter().enumerate() {
+        res[i / 9][i % 9] = *v;
     }
-}
-
-pub fn extract_domains(problem: &Problem) -> SudokuDomains {
-    let mut domains = empty_domains();
-    for i in 0..9 {
-        for j in 0..9 {
-            domains[i][j] = problem.variables[9*i + j];
-        }
-    }
-    return domains;
+    return res;
 }
 

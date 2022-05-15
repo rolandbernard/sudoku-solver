@@ -2,7 +2,7 @@
 use yew::prelude::*;
 use yew_agent::use_bridge;
 
-use crate::solver::sudoku::{empty_sudoku, create_problem, extract_domains};
+use crate::solver::sudoku::{empty_sudoku, default_domains};
 use crate::workers::{SolvingWorker, ReducingWorker};
 use crate::components::sudoku_input::SudokuInput;
 
@@ -11,12 +11,12 @@ pub fn sudoku_solver() -> Html {
     let working = use_state(|| false);
     let reducing = use_state(|| 0);
     let sudoku = use_state(|| empty_sudoku());
-    let problem = use_state(|| create_problem(&sudoku));
+    let domains = use_state(|| default_domains());
     let reduce_bridge = use_bridge::<ReducingWorker, _>({
-        let problem = problem.clone();
+        let domains = domains.clone();
         let reducing = reducing.clone();
         move |sol| {
-            problem.set(sol);
+            domains.set(sol);
             reducing.set(*reducing - 1);
         }
     });
@@ -26,14 +26,16 @@ pub fn sudoku_solver() -> Html {
         Callback::from(move |new| {
             sudoku.set(new);
             reducing.set(*reducing + 1);
-            reduce_bridge.send(create_problem(&new));
+            reduce_bridge.send(new);
         })
     };
     let solver_bridge = use_bridge::<SolvingWorker, _>({
         let on_change = on_change.clone();
         let working = working.clone();
-        move |sol| {
-            on_change.emit(sol);
+        move |res| {
+            if let Some(sol) = res {
+                on_change.emit(sol);
+            }
             working.set(false);
         }
     });
@@ -57,7 +59,7 @@ pub fn sudoku_solver() -> Html {
         <div class="sudoku-solver">
             <SudokuInput
                 sudoku={*sudoku}
-                domains={extract_domains(&problem)}
+                domains={*domains}
                 working={*working}
                 reducing={*reducing != 0}
                 {on_change}

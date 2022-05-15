@@ -1,41 +1,88 @@
 
-use serde::{Deserialize, Serialize};
-
 use crate::solver::domain::DomainSet;
 
-#[derive(Clone, Serialize, Deserialize)]
 pub struct Problem {
-    pub variables: Vec<DomainSet>,
-    pub constraints: Vec<Vec<usize>>,
+    domains: Vec<DomainSet>,
+    constrained: Vec<Vec<usize>>,
+    constraints: Vec<Vec<usize>>,
 }
 
 impl Problem {
     pub fn empty() -> Problem {
-        Problem { variables: Vec::new(), constraints: Vec::new() }
+        Problem { domains: Vec::new(), constrained: Vec::new(), constraints: Vec::new(), }
+    }
+    
+    pub fn with_capacity(variables: usize, constraints: usize) -> Problem {
+        Problem {
+            domains: Vec::with_capacity(variables),
+            constrained: Vec::with_capacity(variables),
+            constraints: Vec::with_capacity(constraints),
+        }
     }
 
     pub fn add_variable(&mut self, domain: DomainSet) -> usize {
-        self.variables.push(domain);
-        return self.variables.len() - 1;
+        self.domains.push(domain);
+        self.constrained.push(Vec::new());
+        return self.domains.len() - 1;
     }
 
     pub fn add_constraint(&mut self, constraint: Vec<usize>) {
+        for &v in &constraint {
+            self.constrained[v].push(self.constraints.len());
+        }
         self.constraints.push(constraint);
     }
 
-    // Local domain consistency
-    pub fn reduce_domains(&mut self) {
+    pub fn find_model(&self) -> Option<Vec<u32>> {
+        let mut state = ProblemState::from_problem(self);
+        if state.solve() {
+            return state.domains.into_iter()
+                .map(|v| v.get_any())
+                .collect();
+        } else {
+            return None;
+        }
+    }
+
+    pub fn reduce_domains(&self) -> Vec<DomainSet> {
+        let mut state = ProblemState::from_problem(self);
+        state.reduce();
+        return state.domains;
+    }
+
+    pub fn minimized_domains(&self) -> Vec<DomainSet> {
+        let mut state = ProblemState::from_problem(self);
+        state.minimize();
+        return state.domains;
+    }
+}
+
+#[derive(Clone)]
+struct ProblemState<'a> {
+    problem: &'a Problem,
+    domains: Vec<DomainSet>,
+}
+
+impl<'a> ProblemState<'a> {
+    fn from_problem(problem: &'a Problem) -> Self {
+        ProblemState {
+            problem: problem,
+            domains: problem.domains.clone(),
+        }
+    }
+
+    fn reduce(&mut self) {
         let mut repeat = true;
         while repeat {
             repeat = false;
-            for c in &self.constraints {
+            for c in &self.problem.constraints {
                 for &v in c {
-                    let dom = self.variables[v];
+                    let dom = self.domains[v];
                     if dom.is_singelton() {
                         for &w in c {
-                            if v != w && !(dom & self.variables[w]).is_empty() {
+                            if v != w && !(dom & self.domains[w]).is_empty() {
                                 repeat = true;
-                                self.variables[w].remove_all(dom);
+                                self.domains[w].remove_all(dom);
                             }
                         }
                     }
@@ -44,27 +91,20 @@ impl Problem {
         }
     }
 
-    pub fn reduced_domains(&self) -> Problem {
-        let mut copy = self.clone();
-        copy.reduce_domains();
-        return copy;
-    }
-
-    // Global satisfiability
-    pub fn solve(&mut self) -> bool {
-        self.reduce_domains();
-        for v in &self.variables {
+    fn solve(&mut self) -> bool {
+        self.reduce();
+        for v in &self.domains {
             if v.is_empty() {
                 return false;
             }
         }
-        for (i, v) in self.variables.iter().enumerate() {
+        for (i, v) in self.domains.iter().enumerate() {
             if !v.is_singelton() {
                 for j in v.clone() {
                     let mut copy = self.clone();
-                    copy.variables[i as usize] = DomainSet::singelton(j);
+                    copy.domains[i as usize] = DomainSet::singelton(j);
                     if copy.solve() {
-                        self.variables = copy.variables;
+                        self.domains = copy.domains;
                         return true;
                     }
                 }
@@ -74,35 +114,19 @@ impl Problem {
         return true;
     }
 
-    pub fn find_model(&self) -> Option<Problem> {
-        let mut copy = self.clone();
-        if copy.solve() {
-            return Some(copy);
-        } else {
-            return None;
-        }
-    }
-
-    // Global domain consistency
-    pub fn minimize_domains(&mut self) {
-        self.reduce_domains();
-        for (i, v) in self.variables.clone().iter().enumerate() {
+    fn minimize(&mut self) {
+        self.reduce();
+        for (i, v) in self.domains.clone().iter().enumerate() {
             if !v.is_empty() && !v.is_singelton() {
                 for j in v.clone() {
                     let mut copy = self.clone();
-                    copy.variables[i as usize] = DomainSet::singelton(j);
+                    copy.domains[i as usize] = DomainSet::singelton(j);
                     if !copy.solve() {
-                        self.variables[i].remove(j);
+                        self.domains[i].remove(j);
                     }
                 }
             }
         }
-    }
-
-    pub fn minimized_domains(&mut self) -> Problem {
-        let mut copy = self.clone();
-        copy.minimize_domains();
-        return copy;
     }
 }
 
