@@ -3,7 +3,7 @@ use yew::prelude::*;
 use yew_agent::use_bridge;
 
 use crate::solver::sudoku::{empty_sudoku, create_problem, extract_domains};
-use crate::workers::SolvingWorker;
+use crate::workers::{SolvingWorker, ReducingWorker};
 use crate::components::sudoku_input::SudokuInput;
 
 #[function_component(SudokuSolver)]
@@ -30,6 +30,12 @@ pub fn sudoku_solver() -> Html {
             working.set(false);
         }
     });
+    let reduce_bridge = use_bridge::<ReducingWorker, _>({
+        let problem = problem.clone();
+        move |sol| {
+            problem.set(sol);
+        }
+    });
     let handle_solve = {
         let sudoku = sudoku.clone();
         let working = working.clone();
@@ -40,15 +46,18 @@ pub fn sudoku_solver() -> Html {
             }
         })
     };
-    let handle_clear = {
-        let sudoku = sudoku.clone();
-        Callback::from(move |_| {
-            sudoku.set(empty_sudoku());
-        })
-    };
     let on_change = {
         let sudoku = sudoku.clone();
-        Callback::from(move |new| sudoku.set(new))
+        Callback::from(move |new| {
+            sudoku.set(new);
+            reduce_bridge.send(create_problem(&new));
+        })
+    };
+    let handle_clear = {
+        let on_change = on_change.clone();
+        Callback::from(move |_| {
+            on_change.emit(empty_sudoku());
+        })
     };
     html! {
         <div class="sudoku-solver">

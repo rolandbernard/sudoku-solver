@@ -68,11 +68,7 @@
                     width: 30%;
                 }
 
-                &.sudoku-results-9, &.sudoku-results-0 {
-                    display: none;
-                }
-
-                &.sudoku-results-8, &.sudoku-results-7 {
+                &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
                     font-size: min(1.5vw, 1.5vh);
                 }
 
@@ -82,6 +78,7 @@
 
                 &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
                     font-size: min(2vw, 2vh);
+
                     div {
                         width: 45%;
                     }
@@ -93,10 +90,15 @@
 
                 &.sudoku-results-1 {
                     font-size: min(4vw, 4vh);
+
                     div {
                         width: 90%;
                     }
                 }
+            }
+
+            &.sudoku-cell-set .sudoku-cell-result {
+                display: none;
             }
 
             .sudoku-cell-input {
@@ -129,6 +131,7 @@
 
             &.sudoku-cell-selected {
                 background-color: mix(vars.$active, vars.$paper, 20%);
+
                 .sudoku-cell-input {
                     border: 3px solid vars.$active;
                 }

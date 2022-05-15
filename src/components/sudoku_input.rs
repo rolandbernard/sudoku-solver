@@ -112,7 +112,7 @@ pub fn sudoku_input(props: &Props) -> Html {
                         html! {
                             <div
                                 id={format!("sudoku-cell-{}-{}", r, c)}
-                                class={classes!("sudoku-cell", cell_classes)}
+                                class={classes!("sudoku-cell", sudoku[r][c].and_then(|_| Some("sudoku-cell-set")), cell_classes)}
                                 onfocus={onclick(r, c)}
                             >
                                 <div class={classes!("sudoku-cell-result", format!("sudoku-results-{}", domains[r][c].len()))}>
