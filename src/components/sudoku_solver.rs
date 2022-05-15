@@ -24,9 +24,11 @@ pub fn sudoku_solver() -> Html {
         let sudoku = sudoku.clone();
         let reducing = reducing.clone();
         Callback::from(move |new| {
-            sudoku.set(new);
-            reducing.set(*reducing + 1);
-            reduce_bridge.send(new);
+            if *sudoku != new {
+                sudoku.set(new);
+                reducing.set(*reducing + 1);
+                reduce_bridge.send(new);
+            }
         })
     };
     let solver_bridge = use_bridge::<SolvingWorker, _>({

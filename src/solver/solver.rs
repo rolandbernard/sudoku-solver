@@ -46,7 +46,7 @@ impl Problem {
 
     pub fn reduce_domains(&self) -> Vec<DomainSet> {
         let mut state = ProblemState::from_problem(self);
-        state.reduce();
+        state.reduce(None);
         return state.domains;
     }
 
@@ -71,28 +71,49 @@ impl<'a> ProblemState<'a> {
         }
     }
 
-    fn reduce(&mut self) {
-        let mut repeat = true;
-        while repeat {
-            repeat = false;
-            for c in &self.problem.constraints {
-                for &v in c {
-                    let dom = self.domains[v];
-                    if dom.is_singelton() {
-                        for &w in c {
-                            if v != w && !(dom & self.domains[w]).is_empty() {
-                                repeat = true;
-                                self.domains[w].remove_all(dom);
-                            }
+    fn reduce_constraint(&mut self, i: usize, changed: &mut bool, changes: &mut [bool]) {
+        for &v in &self.problem.constraints[i] {
+            let dom = self.domains[v];
+            if dom.is_singelton() {
+                for &w in &self.problem.constraints[i] {
+                    if v != w && !(dom & self.domains[w]).is_empty() {
+                        for &c in &self.problem.constrained[w] {
+                            changes[c] = true;
                         }
+                        *changed = true;
+                        self.domains[w].remove_all(dom);
                     }
                 }
             }
         }
     }
 
-    fn solve(&mut self) -> bool {
-        self.reduce();
+    fn reduce(&mut self, i: Option<usize>) {
+        let mut changes;
+        let mut changed;
+        if let Some(i) = i {
+            changes = vec![false; self.problem.constraints.len()];
+            changed = false;
+            for &c in &self.problem.constrained[i] {
+                self.reduce_constraint(c, &mut changed, &mut changes);
+            }
+        } else {
+            changes = vec![true; self.problem.constraints.len()];
+            changed = true;
+        }
+        while changed {
+            changed = false;
+            for i in 0..self.problem.constraints.len() {
+                if changes[i] {
+                    changes[i] = false;
+                    self.reduce_constraint(i, &mut changed, &mut changes);
+                }
+            }
+        }
+    }
+
+    fn solve_next(&mut self, i: Option<usize>) -> bool {
+        self.reduce(i);
         for v in &self.domains {
             if v.is_empty() {
                 return false;
@@ -102,8 +123,8 @@ impl<'a> ProblemState<'a> {
             if !v.is_singelton() {
                 for j in v.clone() {
                     let mut copy = self.clone();
-                    copy.domains[i as usize] = DomainSet::singelton(j);
-                    if copy.solve() {
+                    copy.domains[i] = DomainSet::singelton(j);
+                    if copy.solve_next(Some(i)) {
                         self.domains = copy.domains;
                         return true;
                     }
@@ -113,9 +134,13 @@ impl<'a> ProblemState<'a> {
         }
         return true;
     }
+    
+    fn solve(&mut self) -> bool {
+        self.solve_next(None)
+    }
 
     fn minimize(&mut self) {
-        self.reduce();
+        self.reduce(None);
         for (i, v) in self.domains.clone().iter().enumerate() {
             if !v.is_empty() && !v.is_singelton() {
                 for j in v.clone() {
