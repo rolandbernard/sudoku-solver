@@ -38,6 +38,10 @@ impl DomainSet {
         self.bitset &= !(1 << e);
     }
 
+    pub fn without(&self, e: u32) -> DomainSet {
+        DomainSet { bitset: self.bitset & !(1 << e) }
+    }
+
     pub fn add_all(&mut self, s: DomainSet) {
         self.bitset |= s.bitset;
     }

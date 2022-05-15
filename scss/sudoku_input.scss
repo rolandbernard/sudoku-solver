@@ -75,6 +75,7 @@
                 justify-content: center;
                 transition: all 100ms linear;
                 overflow: hidden;
+                user-select: none;
 
                 div {
                     display: flex;
@@ -133,7 +134,7 @@
                 user-select: none;
                 border: 0px solid vars.$active;
                 caret-color: transparent;
-                transition: background-color 200ms ease-in, border 100ms ease-in;
+                transition: background-color 200ms ease-in;
 
                 &:hover {
                     cursor: pointer;
