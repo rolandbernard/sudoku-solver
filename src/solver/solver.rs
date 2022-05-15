@@ -96,21 +96,46 @@ impl<'a> ProblemState<'a> {
                     }
                 }
             } else {
-                let mut without = DomainSet::empty();
-                for &w in &self.problem.constraints[i] {
-                    if v != w {
-                        without.add_all(self.domains[w]);
-                    }
-                }
                 let old = self.domains[v];
-                for i in self.domains[v] {
-                    if without.without(i).len() < constr_len - 1 {
-                        self.domains[v].remove(i);
+                for j in self.domains[v] {
+                    let mut left = constr_len - 1;
+                    let mut remove = DomainSet::singelton(j);
+                    let mut taken = vec![false; constr_len];
+                    let mut possible = true;
+                    let mut change = true;
+                    while change && possible {
+                        change = false;
+                        for (i, &w) in self.problem.constraints[i].iter().enumerate() {
+                            if v != w && !taken[i] {
+                                let rem = self.domains[w].without_all(remove);
+                                if rem.is_singelton() {
+                                    left -= 1;
+                                    remove.add_all(rem);
+                                    change = true;
+                                    taken[i] = true;
+                                } else if rem.is_empty() {
+                                    possible = false;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                    let mut without = DomainSet::empty();
+                    if possible {
+                        for (i, &w) in self.problem.constraints[i].iter().enumerate() {
+                            if v != w && !taken[i] {
+                                without.add_all(self.domains[w].without_all(remove));
+                            }
+                        }
+                    }
+                    if without.len() < left {
+                        self.domains[v].remove(j);
+                        if self.domains[v].is_empty() {
+                            return false;
+                        }
                     }
                 }
-                if self.domains[v].is_empty() {
-                    return false;
-                } else if self.domains[v] != old {
+                if self.domains[v] != old {
                     for &c in &self.problem.constrained[v] {
                         changes[c] = true;
                     }
