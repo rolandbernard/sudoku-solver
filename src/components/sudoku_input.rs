@@ -50,12 +50,14 @@ pub struct Props {
     pub domains: SudokuDomains,
     #[prop_or(false)]
     pub working: bool,
+    #[prop_or(false)]
+    pub reducing: bool,
     pub on_change: Callback<Sudoku>,
 }
 
 #[function_component(SudokuInput)]
 pub fn sudoku_input(props: &Props) -> Html {
-    let Props {sudoku, domains, working, on_change} = props;
+    let Props {sudoku, domains, working, reducing, on_change} = props;
     let selected = use_state(|| None);
     let mut cells = Vec::new();
     for _ in 0..9 {
@@ -89,9 +91,12 @@ pub fn sudoku_input(props: &Props) -> Html {
             selected.set(None);
         })
     };
-    let mut grid_classes = Vec::with_capacity(2);
+    let mut grid_classes = Vec::with_capacity(3);
     if *working {
         grid_classes.push("sudoku-working");
+    }
+    if *reducing {
+        grid_classes.push("sudoku-reducing");
     }
     html! {
         <div class={classes!("sudoku-grid-wrapper", grid_classes)}>

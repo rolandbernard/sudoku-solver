@@ -33,6 +33,7 @@
             svg {
                 width: clamp(0px, 1.5rem, 10vw);
                 margin-right: 0.5rem;
+                fill: vars.$lighttext;
             }
         }
     }

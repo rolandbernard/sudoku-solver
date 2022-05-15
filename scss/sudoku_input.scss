@@ -15,9 +15,22 @@
     }
 }
 
+@keyframes reducing-animation {
+    0%, 100% {
+        opacity: 1;
+    }
+    20% {
+        opacity: 0.6;
+    }
+}
+
 .sudoku-grid-wrapper {
     &.sudoku-working {
         animation: solving-animation 750ms ease-in-out infinite;
+    }
+
+    &.sudoku-reducing .sudoku-cell-result {
+        animation: reducing-animation 750ms ease-in-out infinite;
     }
     
     .sudoku-grid {
@@ -60,12 +73,15 @@
                 flex-flow: row wrap;
                 align-items: center;
                 justify-content: center;
+                transition: all 100ms linear;
+                overflow: hidden;
 
                 div {
                     display: flex;
                     align-items: center;
                     justify-content: center;
                     width: 30%;
+                    transition: all 100ms linear;
                 }
 
                 &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
