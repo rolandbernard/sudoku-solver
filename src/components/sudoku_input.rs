@@ -79,7 +79,7 @@ pub fn sudoku_input(props: &Props) -> Html {
             }
         })
     };
-    let onclick = |r, c| {
+    let onfocus = |r, c| {
         let selected = selected.clone();
         Callback::from(move |_| {
             selected.set(Some((r, c)));
@@ -118,7 +118,7 @@ pub fn sudoku_input(props: &Props) -> Html {
                             <div
                                 id={format!("sudoku-cell-{}-{}", r, c)}
                                 class={classes!("sudoku-cell", sudoku[r][c].and_then(|_| Some("sudoku-cell-set")), cell_classes)}
-                                onfocus={onclick(r, c)}
+                                onfocus={onfocus(r, c)}
                             >
                                 <div class={classes!("sudoku-cell-result", format!("sudoku-results-{}", domains[r][c].len()))}>
                                     { domains[r][c].clone().map(|e| html!{ <div>{(e + 1).to_string()}</div> }).collect::<Html>() }

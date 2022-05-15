@@ -95,29 +95,35 @@ impl<'a> ProblemState<'a> {
                         }
                     }
                 }
+            } else {
+                let mut without = DomainSet::empty();
+                for &w in &self.problem.constraints[i] {
+                    if v != w {
+                        without.add_all(self.domains[w]);
+                    }
+                }
+                let old = self.domains[v];
+                for i in self.domains[v] {
+                    if without.without(i).len() < constr_len - 1 {
+                        self.domains[v].remove(i);
+                    }
+                }
+                if self.domains[v].is_empty() {
+                    return false;
+                } else if self.domains[v] != old {
+                    for &c in &self.problem.constrained[v] {
+                        changes[c] = true;
+                    }
+                    *changed = true;
+                }
             }
         }
+        let mut all = DomainSet::empty();
         for &v in &self.problem.constraints[i] {
-            let mut without = DomainSet::empty();
-            for &w in &self.problem.constraints[i] {
-                if v != w {
-                    without.add_all(self.domains[w]);
-                }
-            }
-            let old = self.domains[v].clone();
-            for i in self.domains[v].clone() {
-                if without.without(i).len() < constr_len - 1 {
-                    self.domains[v].remove(i);
-                }
-            }
-            if self.domains[v].is_empty() {
-                return false;
-            } else if self.domains[v] != old {
-                for &c in &self.problem.constrained[v] {
-                    changes[c] = true;
-                }
-                *changed = true;
-            }
+            all.add_all(self.domains[v]);
+        }
+        if all.len() < constr_len {
+            return false;
         }
         return true;
     }
@@ -154,7 +160,7 @@ impl<'a> ProblemState<'a> {
         }
         for (i, v) in self.domains.iter().enumerate() {
             if !v.is_singelton() {
-                for j in v.clone() {
+                for j in *v {
                     let mut copy = self.clone();
                     copy.domains[i] = DomainSet::singelton(j);
                     if copy.solve_next(Some(i)) {
@@ -176,7 +182,7 @@ impl<'a> ProblemState<'a> {
         self.reduce(None);
         for (i, v) in self.domains.clone().iter().enumerate() {
             if !v.is_empty() && !v.is_singelton() {
-                for j in v.clone() {
+                for j in *v {
                     let mut copy = self.clone();
                     copy.domains[i] = DomainSet::singelton(j);
                     if !copy.solve_next(Some(i)) {

@@ -8,17 +8,17 @@ pub struct DomainSet {
 }
 
 impl DomainSet {
-    pub fn empty() -> DomainSet {
+    pub fn empty() -> Self {
         DomainSet { bitset: 0 }
     }
 
-    pub fn singelton(e: u32) -> DomainSet {
+    pub fn singelton(e: u32) -> Self {
         let mut new = Self::empty();
         new.add(e);
         return new;
     }
 
-    pub fn range(range: Range<u32>) -> DomainSet {
+    pub fn range(range: Range<u32>) -> Self {
         let mut new = Self::empty();
         for i in range {
             new.add(i);
@@ -38,19 +38,19 @@ impl DomainSet {
         self.bitset &= !(1 << e);
     }
 
-    pub fn without(&self, e: u32) -> DomainSet {
+    pub fn without(&self, e: u32) -> Self {
         DomainSet { bitset: self.bitset & !(1 << e) }
     }
 
-    pub fn add_all(&mut self, s: DomainSet) {
+    pub fn add_all(&mut self, s: Self) {
         self.bitset |= s.bitset;
     }
 
-    pub fn remove_all(&mut self, s: DomainSet) {
+    pub fn remove_all(&mut self, s: Self) {
         self.bitset &= !s.bitset;
     }
 
-    pub fn retain_all(&mut self, s: DomainSet) {
+    pub fn retain_all(&mut self, s: Self) {
         self.bitset &= s.bitset;
     }
 
