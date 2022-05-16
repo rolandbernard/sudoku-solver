@@ -16,6 +16,20 @@ pub fn default_domains() -> SudokuDomains {
     [[DomainSet::range(0..9); 9]; 9]
 }
 
+pub fn sudoku_domains(sudoku: &Sudoku) -> SudokuDomains {
+    let mut res = empty_domains();
+    for i in 0..9 {
+        for j in 0..9 {
+            if let Some(v) = sudoku[i][j] {
+                res[i][j] = DomainSet::singelton(v);
+            } else {
+                res[i][j] = DomainSet::range(0..9);
+            }
+        }
+    }
+    return res;
+}
+
 pub fn create_problem(sudoku: &Sudoku) -> Problem {
     let mut prob = Problem::with_capacity(9*9, 3*9);
     for row in sudoku {

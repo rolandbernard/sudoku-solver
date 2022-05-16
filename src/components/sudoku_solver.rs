@@ -2,7 +2,7 @@
 use yew::prelude::*;
 use yew_agent::{Bridge, Bridged};
 
-use crate::solver::sudoku::{empty_sudoku, default_domains, Sudoku, SudokuDomains};
+use crate::solver::sudoku::{empty_sudoku, default_domains, Sudoku, SudokuDomains, sudoku_domains};
 use crate::workers::{SolvingWorker, ReducingWorker, MinimizingWorker};
 use crate::components::sudoku_input::SudokuInput;
 
@@ -29,6 +29,41 @@ pub struct SudokuSolver {
     solver_bridge: Box<dyn Bridge<SolvingWorker>>,
 }
 
+impl SudokuSolver {
+    fn has_no_solution(&self) -> bool {
+        if self.solved == Some(false) {
+            return true;
+        }
+        if self.domain_change >= 2*self.change {
+            for row in self.domains {
+                for cel in row {
+                    if cel.is_empty() {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    fn has_multiple_solution(&self) -> bool {
+        if self.domain_change == 1 + 2*self.change {
+            for row in self.domains {
+                for cel in row {
+                    if !cel.is_singelton() {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    fn is_reducing(&self) -> bool {
+        self.domain_change < 1 + 2*self.change
+    }
+}
+
 impl Component for SudokuSolver {
     type Message = SolverMessage;
     type Properties = ();
@@ -37,7 +72,7 @@ impl Component for SudokuSolver {
         Self {
             sudoku: empty_sudoku(),
             domains: default_domains(),
-            change: 0, domain_change: 0,
+            change: 0, domain_change: 1,
             solved: None, solving: None,
             reducing: None, minimizing: None,
             solver_bridge: SolvingWorker::bridge(
@@ -52,7 +87,7 @@ impl Component for SudokuSolver {
     fn update(&mut self, _ctx: &Context<Self>, msg: Self::Message) -> bool {
         match msg {
             Self::Message::Change(new) => {
-                if new != self.sudoku {
+                if new != self.sudoku && self.solving == None {
                     self.change += 1;
                     self.sudoku = new;
                     self.solved = None;
@@ -67,46 +102,56 @@ impl Component for SudokuSolver {
                 }
             },
             Self::Message::Solve => {
-                self.solving = Some(self.change);
-                self.solver_bridge.send((self.sudoku, self.change));
+                if self.solving == None {
+                    self.solving = Some(self.change);
+                    self.solver_bridge.send((self.sudoku, self.change));
+                }
             },
             Self::Message::Clear => {
-                self.change += 1;
-                self.sudoku = empty_sudoku();
-                self.domains = default_domains();
-                self.domain_change = self.change;
-                self.solved = None;
+                if self.solving == None {
+                    self.change += 1;
+                    self.sudoku = empty_sudoku();
+                    self.domains = default_domains();
+                    self.domain_change = 1 + 2*self.change;
+                    self.solved = None;
+                }
             },
             Self::Message::Solved(res, id) => {
                 if self.solving == Some(id) {
+                    self.solving = None;
                     if let Some(sol) = res {
+                        self.change += 1;
                         self.sudoku = sol;
-                        self.solving = None;
                         self.solved = Some(true);
+                        self.domains = sudoku_domains(&self.sudoku);
+                        self.domain_change = 1 + 2*self.change;
                     } else {
                         self.solved = Some(false);
                     }
                 }
             },
             Self::Message::Reduced(sol, id) => {
-                if self.reducing == Some(id) && self.domain_change < id {
-                    self.domains = sol;
-                    self.domain_change = id;
+                if self.reducing == Some(id) {
                     self.reducing = None;
+                    if self.domain_change < 2*id {
+                        self.domains = sol;
+                        self.domain_change = 2*id;
+                    }
                 }
-                if self.domain_change < self.change {
+                if self.domain_change < 2*self.change {
                     self.reducing = Some(self.change);
                     self.reduce_bridge.send((self.sudoku, self.change));
                 }
             },
             Self::Message::Minimized(sol, id) => {
-                if self.minimizing == Some(id) && self.domain_change <= id {
-                    self.domains = sol;
-                    self.domain_change = id;
-                    self.reducing = None;
+                if self.minimizing == Some(id) {
                     self.minimizing = None;
+                    if self.domain_change < 1 + 2*id {
+                        self.domains = sol;
+                        self.domain_change = 1 + 2*id;
+                    }
                 }
-                if id < self.change {
+                if self.domain_change < 1 + 2*self.change {
                     self.minimizing = Some(self.change);
                     self.minimize_bridge.send((self.sudoku, self.change));
                 }
@@ -122,17 +167,28 @@ impl Component for SudokuSolver {
                     sudoku={self.sudoku}
                     domains={self.domains}
                     working={self.solving != None}
-                    reducing={self.reducing != None || self.minimizing != None}
+                    reducing={self.is_reducing()}
                     on_change={ctx.link().callback(|new| Self::Message::Change(new))}
                 />
-                <div class="button-row">
-                    <button
-                        onclick={ctx.link().callback(|_| Self::Message::Solve)}
-                        disabled={self.solving != None || self.solved != None}
-                    >{"Solve"}</button>
-                    <button
-                        onclick={ctx.link().callback(|_| Self::Message::Clear)}
-                    >{"Clear"}</button>
+                <div class="bottom-row">
+                    <div class="info-text">{
+                        if self.has_no_solution() {
+                            "no solutions"
+                        } else if self.has_multiple_solution() {
+                            "multiple solutions"
+                        } else {
+                            ""
+                        }
+                    }</div>
+                    <div class="buttons">
+                        <button
+                            onclick={ctx.link().callback(|_| Self::Message::Solve)}
+                            disabled={self.solving != None || self.solved != None}
+                        >{"Solve"}</button>
+                        <button
+                            onclick={ctx.link().callback(|_| Self::Message::Clear)}
+                        >{"Clear"}</button>
+                    </div>
                 </div>
             </div>
         }
