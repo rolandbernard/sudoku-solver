@@ -8,9 +8,9 @@ pub struct SolvingWorker {
 }
 
 impl Agent for SolvingWorker {
-    type Input = Sudoku;
+    type Input = (Sudoku, usize);
     type Message = ();
-    type Output = Option<Sudoku>;
+    type Output = (Option<Sudoku>, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -19,11 +19,12 @@ impl Agent for SolvingWorker {
 
     fn update(&mut self, _msg: Self::Message) {}
 
-    fn handle_input(&mut self, sudoku: Self::Input, id: HandlerId) {
+    fn handle_input(&mut self, msg: Self::Input, id: HandlerId) {
+        let (sudoku, change) = msg;
         let prob = create_problem(&sudoku);
         let result = prob.find_model()
             .and_then(|v| Some(resize_variables(v)));
-        self.link.respond(id, result);
+        self.link.respond(id, (result, change));
     }
 
     fn name_of_resource() -> &'static str {
@@ -36,9 +37,9 @@ pub struct ReducingWorker {
 }
 
 impl Agent for ReducingWorker {
-    type Input = Sudoku;
+    type Input = (Sudoku, usize);
     type Message = ();
-    type Output = SudokuDomains;
+    type Output = (SudokuDomains, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -47,10 +48,11 @@ impl Agent for ReducingWorker {
 
     fn update(&mut self, _msg: Self::Message) {}
 
-    fn handle_input(&mut self, sudoku: Self::Input, id: HandlerId) {
+    fn handle_input(&mut self, msg: Self::Input, id: HandlerId) {
+        let (sudoku, change) = msg;
         let prob = create_problem(&sudoku);
         let result = resize_domains(prob.reduce_domains());
-        self.link.respond(id, result);
+        self.link.respond(id, (result, change));
     }
 
     fn name_of_resource() -> &'static str {
@@ -63,9 +65,9 @@ pub struct MinimizingWorker {
 }
 
 impl Agent for MinimizingWorker {
-    type Input = Sudoku;
+    type Input = (Sudoku, usize);
     type Message = ();
-    type Output = SudokuDomains;
+    type Output = (SudokuDomains, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -74,10 +76,11 @@ impl Agent for MinimizingWorker {
 
     fn update(&mut self, _msg: Self::Message) {}
 
-    fn handle_input(&mut self, sudoku: Self::Input, id: HandlerId) {
+    fn handle_input(&mut self, msg: Self::Input, id: HandlerId) {
+        let (sudoku, change) = msg;
         let prob = create_problem(&sudoku);
         let result = resize_domains(prob.minimized_domains());
-        self.link.respond(id, result);
+        self.link.respond(id, (result, change));
     }
 
     fn name_of_resource() -> &'static str {
