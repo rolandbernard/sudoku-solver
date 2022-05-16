@@ -30,6 +30,10 @@ impl Agent for SolvingWorker {
     fn name_of_resource() -> &'static str {
         "worker_solve.js"
     }
+
+    fn resource_path_is_relative() -> bool {
+        true
+    }
 }
 
 pub struct ReducingWorker {
@@ -58,6 +62,10 @@ impl Agent for ReducingWorker {
     fn name_of_resource() -> &'static str {
         "worker_reduce.js"
     }
+
+    fn resource_path_is_relative() -> bool {
+        true
+    }
 }
 
 pub struct MinimizingWorker {
@@ -85,6 +93,10 @@ impl Agent for MinimizingWorker {
 
     fn name_of_resource() -> &'static str {
         "worker_minimize.js"
+    }
+
+    fn resource_path_is_relative() -> bool {
+        true
     }
 }
 
