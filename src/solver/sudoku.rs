@@ -21,7 +21,7 @@ pub fn sudoku_domains(sudoku: &Sudoku) -> SudokuDomains {
     for i in 0..9 {
         for j in 0..9 {
             if let Some(v) = sudoku[i][j] {
-                res[i][j] = DomainSet::singelton(v);
+                res[i][j] = DomainSet::singelton(v - 1);
             } else {
                 res[i][j] = DomainSet::range(0..9);
             }
