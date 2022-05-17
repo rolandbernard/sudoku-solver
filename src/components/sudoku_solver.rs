@@ -163,7 +163,13 @@ impl Component for SudokuSolver {
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div class="sudoku-solver">
-                <div class="status-row">
+                <SudokuInput
+                    sudoku={self.sudoku}
+                    domains={self.domains}
+                    working={self.solving != None}
+                    reducing={self.is_reducing()}
+                    on_change={ctx.link().callback(|new| Self::Message::Change(new))}
+                >
                     <div class="info-text">{
                         if self.has_no_solution() {
                             "no solutions"
@@ -182,14 +188,7 @@ impl Component for SudokuSolver {
                             onclick={ctx.link().callback(|_| Self::Message::Clear)}
                         >{"Clear"}</button>
                     </div>
-                </div>
-                <SudokuInput
-                    sudoku={self.sudoku}
-                    domains={self.domains}
-                    working={self.solving != None}
-                    reducing={self.is_reducing()}
-                    on_change={ctx.link().callback(|new| Self::Message::Change(new))}
-                />
+                </SudokuInput>
             </div>
         }
     }

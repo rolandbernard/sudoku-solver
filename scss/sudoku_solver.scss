@@ -17,7 +17,6 @@
         padding-left: 0.5rem;
         user-select: none;
         align-items: center;
-        width: min(90vw, 75vh);
 
         .info-text {
             display: flex;
@@ -54,12 +53,12 @@
                 border-radius: 1rem;
                 border: 1px solid transparent;
                 transition: border 100ms ease-in;
-        
+
                 &:hover {
                     cursor: pointer;
                     border: 1px solid vars.$active;
                 }
-        
+
                 &:disabled {
                     border: 1px solid transparent;
                 }
