@@ -21,7 +21,7 @@ impl Agent for SolvingWorker {
 
     fn handle_input(&mut self, msg: Self::Input, id: HandlerId) {
         let (sudoku, change) = msg;
-        let prob = create_problem(&sudoku);
+        let prob = create_problem(&sudoku_domains(&sudoku));
         let result = prob.find_model()
             .and_then(|v| Some(resize_variables(v)));
         self.link.respond(id, (result, change));
@@ -41,7 +41,7 @@ pub struct ReducingWorker {
 }
 
 impl Agent for ReducingWorker {
-    type Input = (Sudoku, usize);
+    type Input = (SudokuDomains, usize);
     type Message = ();
     type Output = (SudokuDomains, usize);
     type Reach = Public<Self>;
@@ -73,7 +73,7 @@ pub struct MinimizingWorker {
 }
 
 impl Agent for MinimizingWorker {
-    type Input = (Sudoku, usize);
+    type Input = (SudokuDomains, usize);
     type Message = ();
     type Output = (SudokuDomains, usize);
     type Reach = Public<Self>;

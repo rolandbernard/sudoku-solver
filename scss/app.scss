@@ -10,7 +10,7 @@
     grid-template-rows: 1fr min-content 1fr;
 
     .page-title {
-        font-size: clamp(0px, 2.75rem, 10vw);
+        font-size: clamp(0px, 3rem, 10vw);
         display: grid;
         align-content: center;
         justify-content: center;
@@ -18,7 +18,7 @@
     }
 
     .page-footer {
-        font-size: clamp(0px, 0.9rem, 5vw);
+        font-size: clamp(0px, 0.8rem, 5vw);
         display: grid;
         align-content: flex-end;
         justify-content: center;

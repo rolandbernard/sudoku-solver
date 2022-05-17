@@ -19,9 +19,9 @@ then
     git checkout $BRANCH
 else
     git checkout --orphan $BRANCH
-    rm -rf *
     rm -f .gitignore
 fi
+rm -rf *
 
 cp -r $SRC_DIR/* $TMP_DIR/
 

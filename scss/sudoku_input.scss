@@ -39,10 +39,8 @@
         grid-template-rows: repeat(9, 1fr);
         align-items: stretch;
         justify-items: stretch;
-        width: 75vw;
-        height: 75vw;
-        max-width: 75vh;
-        max-height: 75vh;
+        width: min(90vw, 75vh);
+        height: min(90vw, 75vh);
         border: 2px solid vars.$darktext;
         outline: 0.2rem solid white;
 
@@ -64,10 +62,10 @@
             .sudoku-cell-result {
                 color: vars.$lighttext;
                 position: absolute;
-                top: 5px;
-                left: 5px;
-                right: 5px;
-                bottom: 5px;
+                top: min(0.5vw, 0.5vh);
+                left: min(0.5vw, 0.5vh);
+                right: min(0.5vw, 0.5vh);
+                bottom: min(0.5vw, 0.5vh);
                 pointer-events: none;
                 display: flex;
                 flex-flow: row wrap;
@@ -86,15 +84,15 @@
                 }
 
                 &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
-                    font-size: min(1.5vw, 1.5vh);
+                    font-size: min(2.16vw, 1.8vh);
                 }
 
                 &.sudoku-results-6, &.sudoku-results-5 {
-                    font-size: min(2vw, 2vh);
+                    font-size: min(2.88vw, 2.4vh);
                 }
 
                 &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
-                    font-size: min(2vw, 2vh);
+                    font-size: min(2.88vw, 2.4vh);
 
                     div {
                         width: 45%;
@@ -102,11 +100,11 @@
                 }
 
                 &.sudoku-results-2 {
-                    font-size: min(3vw, 3vh);
+                    font-size: min(4.32vw, 3.6vh);
                 }
 
                 &.sudoku-results-1 {
-                    font-size: min(4vw, 4vh);
+                    font-size: min(5.76vw, 4.8vh);
 
                     div {
                         width: 90%;
@@ -130,7 +128,7 @@
                 display: grid;
                 align-content: center;
                 justify-content: center;
-                font-size: min(5vw, 5vh);
+                font-size: min(7.2vw, 6vh);
                 user-select: none;
                 border: 0px solid vars.$active;
                 caret-color: transparent;

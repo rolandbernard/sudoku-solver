@@ -93,11 +93,11 @@ impl Component for SudokuSolver {
                     self.solved = None;
                     if self.reducing == None {
                         self.reducing = Some(self.change);
-                        self.reduce_bridge.send((self.sudoku, self.change));
+                        self.reduce_bridge.send((sudoku_domains(&self.sudoku), self.change));
                     }
                     if self.minimizing == None {
                         self.minimizing = Some(self.change);
-                        self.minimize_bridge.send((self.sudoku, self.change));
+                        self.minimize_bridge.send((sudoku_domains(&self.sudoku), self.change));
                     }
                 }
             },
@@ -140,7 +140,7 @@ impl Component for SudokuSolver {
                 }
                 if self.domain_change < 2*self.change {
                     self.reducing = Some(self.change);
-                    self.reduce_bridge.send((self.sudoku, self.change));
+                    self.reduce_bridge.send((sudoku_domains(&self.sudoku), self.change));
                 }
             },
             Self::Message::Minimized(sol, id) => {
@@ -153,7 +153,7 @@ impl Component for SudokuSolver {
                 }
                 if self.domain_change < 1 + 2*self.change {
                     self.minimizing = Some(self.change);
-                    self.minimize_bridge.send((self.sudoku, self.change));
+                    self.minimize_bridge.send((sudoku_domains(&self.sudoku), self.change));
                 }
             },
         }
@@ -163,14 +163,7 @@ impl Component for SudokuSolver {
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div class="sudoku-solver">
-                <SudokuInput
-                    sudoku={self.sudoku}
-                    domains={self.domains}
-                    working={self.solving != None}
-                    reducing={self.is_reducing()}
-                    on_change={ctx.link().callback(|new| Self::Message::Change(new))}
-                />
-                <div class="bottom-row">
+                <div class="status-row">
                     <div class="info-text">{
                         if self.has_no_solution() {
                             "no solutions"
@@ -190,6 +183,13 @@ impl Component for SudokuSolver {
                         >{"Clear"}</button>
                     </div>
                 </div>
+                <SudokuInput
+                    sudoku={self.sudoku}
+                    domains={self.domains}
+                    working={self.solving != None}
+                    reducing={self.is_reducing()}
+                    on_change={ctx.link().callback(|new| Self::Message::Change(new))}
+                />
             </div>
         }
     }

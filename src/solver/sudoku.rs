@@ -30,15 +30,11 @@ pub fn sudoku_domains(sudoku: &Sudoku) -> SudokuDomains {
     return res;
 }
 
-pub fn create_problem(sudoku: &Sudoku) -> Problem {
+pub fn create_problem(sudoku: &SudokuDomains) -> Problem {
     let mut prob = Problem::with_capacity(9*9, 3*9);
     for row in sudoku {
         for cel in row {
-            if let Some(v) = cel {
-                prob.add_variable(DomainSet::singelton(*v - 1));
-            } else {
-                prob.add_variable(DomainSet::range(0..9));
-            }
+            prob.add_variable(*cel);
         }
     }
     for i in 0..9 {
