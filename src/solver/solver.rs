@@ -35,7 +35,18 @@ impl Problem {
 
     pub fn find_model(&self) -> Option<Vec<u32>> {
         let mut state = ProblemState::from_problem(self);
-        if state.solve() {
+        if state.solve(None) {
+            return state.domains.into_iter()
+                .map(|v| v.get_any())
+                .collect();
+        } else {
+            return None;
+        }
+    }
+
+    pub fn find_model_with(&self, prefer: &[DomainSet]) -> Option<Vec<u32>> {
+        let mut state = ProblemState::from_problem(self);
+        if state.solve_with(None, prefer) {
             return state.domains.into_iter()
                 .map(|v| v.get_any())
                 .collect();
@@ -103,7 +114,7 @@ impl<'a> ProblemState<'a> {
         }
     }
 
-    fn reduce_constraint(&mut self, constr: &[usize], changed: &mut bool, changes: &mut [bool]) -> bool {
+    fn reduce_constraint(&mut self, constr: &[usize], changed: &mut bool, changes: &mut DomainSet) -> bool {
         for (i, &v) in constr.iter().enumerate() {
             let old = self.domains[v];
             for j in self.domains[v] {
@@ -116,7 +127,7 @@ impl<'a> ProblemState<'a> {
             }
             if self.domains[v] != old {
                 for &c in &self.problem.constrained[v] {
-                    changes[c] = true;
+                    changes.add(c as u32);
                 }
                 *changed = true;
             }
@@ -128,18 +139,18 @@ impl<'a> ProblemState<'a> {
         let mut changes;
         let mut changed = true;
         if let Some(i) = i {
-            changes = vec![false; self.problem.constraints.len()];
+            changes = DomainSet::empty();
             for &c in &self.problem.constrained[i] {
-                changes[c] = true;
+                changes.add(c as u32);
             }
         } else {
-            changes = vec![true; self.problem.constraints.len()];
+            changes = DomainSet::range(0..self.problem.constraints.len() as u32);
         }
         while changed {
             changed = false;
             for (i, constr) in self.problem.constraints.iter().enumerate() {
-                if changes[i] {
-                    changes[i] = false;
+                if changes.contains(i as u32) {
+                    changes.remove(i as u32);
                     if !self.reduce_constraint(constr, &mut changed, &mut changes) {
                         self.domains = vec![DomainSet::empty(); self.domains.len()];
                         return false;
@@ -150,16 +161,20 @@ impl<'a> ProblemState<'a> {
         return true
     }
 
-    fn solve_next(&mut self, i: Option<usize>) -> bool {
+    fn solve(&mut self, i: Option<usize>) -> bool {
+        self.solve_with(i, &self.problem.domains)
+    }
+
+    fn solve_with(&mut self, i: Option<usize>, prefer: &[DomainSet]) -> bool {
         if !self.reduce(i) {
             return false;
         }
         for (i, v) in self.domains.iter().enumerate() {
             if !v.is_singelton() {
-                for j in *v {
+                for j in (*v & prefer[i]).chain(v.without_all(prefer[i])) {
                     let mut copy = self.clone();
                     copy.domains[i] = DomainSet::singelton(j);
-                    if copy.solve_next(Some(i)) {
+                    if copy.solve_with(Some(i), prefer) {
                         self.domains = copy.domains;
                         return true;
                     }
@@ -169,21 +184,20 @@ impl<'a> ProblemState<'a> {
         }
         return true;
     }
-    
-    fn solve(&mut self) -> bool {
-        self.solve_next(None)
-    }
 
     fn minimize(&mut self) {
         self.reduce(None);
-        for (i, v) in self.domains.clone().iter().enumerate() {
-            if !v.is_empty() && !v.is_singelton() {
-                for j in *v {
-                    let mut copy = self.clone();
-                    copy.domains[i] = DomainSet::singelton(j);
-                    if !copy.solve_next(Some(i)) {
-                        self.domains[i].remove(j);
+        let mut to_test = self.domains.clone();
+        for i in 0..self.domains.len(){
+            for j in to_test[i] {
+                let mut copy = self.clone();
+                copy.domains[i] = DomainSet::singelton(j);
+                if copy.solve_with(Some(i), &to_test) {
+                    for (i, d) in copy.domains.iter().enumerate() {
+                        to_test[i].remove_all(*d);
                     }
+                } else {
+                    self.domains[i].remove(j);
                 }
             }
         }
