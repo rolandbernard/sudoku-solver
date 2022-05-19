@@ -29,6 +29,7 @@
             padding-right: 0.5rem;
             padding-left: 0.5rem;
             overflow: hidden;
+            white-space: nowrap;
         }
 
         .buttons {
@@ -53,6 +54,11 @@
                 border-radius: 1rem;
                 border: 1px solid transparent;
                 transition: border 100ms ease-in;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: vars.$darktext;
+                fill: vars.$darktext;
 
                 &:hover {
                     cursor: pointer;
@@ -61,6 +67,8 @@
 
                 &:disabled {
                     border: 1px solid transparent;
+                    color: vars.$lighttext;
+                    fill: vars.$lighttext;
                 }
             }
         }
