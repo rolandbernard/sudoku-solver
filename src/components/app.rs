@@ -1,7 +1,24 @@
 
 use yew::prelude::*;
+use yew_router::prelude::*;
 
 use crate::components::sudoku_solver::SudokuSolver;
+
+#[derive(Clone, Routable, PartialEq)]
+enum Route {
+    #[not_found]
+    #[at("/")]
+    Normal,
+    #[at("/16")]
+    Big,
+}
+
+fn switch(routes: &Route) -> Html {
+    match routes {
+        Route::Normal => html! { <SudokuSolver<9> /> },
+        Route::Big => html! { <SudokuSolver<16> /> },
+    }
+}
 
 #[function_component(App)]
 pub fn app() -> Html {
@@ -10,7 +27,9 @@ pub fn app() -> Html {
             <div class="page-title">
                 {"Sudoku Solver"}
             </div>
-            <SudokuSolver<16> />
+            <BrowserRouter>
+                <Switch<Route> render={Switch::render(switch)} />
+            </BrowserRouter>
             <div class="page-footer">
                 <a rel="noreferrer" href="https://github.com/rolandbernard/sudoku-solver">
                     <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 11.641667 11.641667" version="1.1">

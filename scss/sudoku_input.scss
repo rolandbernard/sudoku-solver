@@ -70,7 +70,7 @@
                     border-bottom: 2px solid vars.$darktext;
                 }
 
-                .sudoku-cell {
+                .sudoku-cell-result {
                     top: min(0.5vw, 0.5vh);
                     left: min(0.5vw, 0.5vh);
                     right: min(0.5vw, 0.5vh);
@@ -116,6 +116,7 @@
                     left: min(0.1vw, 0.1vh);
                     right: min(0.1vw, 0.1vh);
                     bottom: min(0.1vw, 0.1vh);
+                    align-content: center;
                 
                     &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
                         font-size: min(1.3vw, 1.08vh);
@@ -155,7 +156,6 @@
                     flex-flow: row wrap;
                     align-items: center;
                     justify-content: center;
-                    align-content: center;
                     transition: all 100ms linear;
                     overflow: hidden;
                     user-select: none;
@@ -244,6 +244,11 @@
         
         &.sudoku-input-16 {
             grid-template-columns: repeat(9, 1fr);
+
+            .number-button {
+                width: min(6vw, 5vh);
+                height: min(3vw, 2.5vh);
+            }
         }
 
         .number-button {
@@ -270,9 +275,10 @@
         }
 
         @media (max-aspect-ratio: 5/9) {
+            margin-top: 4vh;
+
             &.sudoku-input-9 {
                 grid-template-columns: repeat(5, 1fr);
-                margin-top: 4vh;
 
                 .number-button {
                     width: 15vw;
@@ -282,7 +288,6 @@
             
             &.sudoku-input-16 {
                 grid-template-columns: repeat(6, 1fr);
-                margin-top: 4vh;
 
                 .number-button {
                     width: 15vw;
@@ -298,6 +303,11 @@
 
             &.sudoku-input-16 {
                 grid-template-columns: repeat(2, 1fr);
+
+                .number-button {
+                    width: min(6vw, 5vh);
+                    height: min(6vw, 5vh);
+                }
             }
         }
     }

@@ -7,6 +7,8 @@ GIT=https://github.com/rolandbernard/sudoku-solver
 URL=sudoku-solver
 
 trunk build --release --public-url $URL
+cp $SRC_DIR/index.html $SRC_DIR/404.html
+cp $SRC_DIR/index.html $SRC_DIR/16.html
 
 mkdir -p $TMP_DIR
 cd $TMP_DIR
