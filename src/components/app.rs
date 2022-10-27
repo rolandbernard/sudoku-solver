@@ -10,7 +10,7 @@ pub fn app() -> Html {
             <div class="page-title">
                 {"Sudoku Solver"}
             </div>
-            <SudokuSolver<9> />
+            <SudokuSolver<16> />
             <div class="page-footer">
                 <a rel="noreferrer" href="https://github.com/rolandbernard/sudoku-solver">
                     <svg xmlns="http://www.w3.org/2000/svg" width="44" height="44" viewBox="0 0 11.641667 11.641667" version="1.1">

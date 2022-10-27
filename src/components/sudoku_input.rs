@@ -11,8 +11,12 @@ fn change_sudoku<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, 
 
 fn sudoku_change<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku<N> {
     let key = event.key_code();
-    if key >= ('1' as u32) && key <= ('9' as u32) {
+    if key >= ('1' as u32) && key <= ('9' as u32) && key - ('0' as u32) <= N as u32 {
         sudoku[row][col] = Some(key - ('0' as u32));
+    } else if key >= ('A' as u32) && key <= ('F' as u32) && 10 + key - ('A' as u32) <= N as u32 {
+        sudoku[row][col] = Some(10 + key - ('A' as u32));
+    } else if key >= ('0' as u32) && 16 <= N {
+        sudoku[row][col] = Some(16);
     } else if key == (' ' as u32) || key == 8 {
         sudoku[row][col] = None;
     }
@@ -67,9 +71,9 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
     let selected = use_state_eq(|| None);
     let last = use_state_eq(|| None);
     let mut cells = Vec::new();
-    for _ in 0..9 {
+    for _ in 0..N {
         let mut row = Vec::new();
-        for _ in 0..9 {
+        for _ in 0..N {
             row.push(use_node_ref());
         }
         cells.push(row);
@@ -125,9 +129,9 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
         <div class="sudoku-input-wrapper">
             <div class={classes!("sudoku-grid-wrapper", grid_classes)}>
                 <div class="status-row">{ children.clone() }</div>
-                <div class="sudoku-grid" {onkeydown} {onblur}>
-                    { (0..9).map(|r|
-                        (0..9).map(|c| {
+                <div class={classes!("sudoku-grid", format!("sudoku-grid-{N}"))} {onkeydown} {onblur}>
+                    { (0..N).map(|r|
+                        (0..N).map(|c| {
                             let mut cell_classes = Vec::with_capacity(5);
                             cell_classes.push(format!("sudoku-cell-{}-x", r));
                             cell_classes.push(format!("sudoku-cell-x-{}", c));
@@ -135,7 +139,8 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
                                 if (r, c) == (sr, sc) {
                                     cell_classes.push("sudoku-cell-selected".to_owned());
                                 }
-                                if r == sr || c == sc || (r / 3, c / 3) == (sr / 3, sc / 3) {
+                                let sq = (N as f64).sqrt() as usize;
+                                if r == sr || c == sc || (r / sq, c / sq) == (sr / sq, sc / sq) {
                                     cell_classes.push("sudoku-cell-constraint".to_owned());
                                 }
                             }
@@ -146,11 +151,11 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
                                     onfocus={onfocus(r, c)}
                                 >
                                     <div class={classes!("sudoku-cell-result", format!("sudoku-results-{}", domains[r][c].len()))}>
-                                        { domains[r][c].clone().map(|e| html!{ <div>{(e + 1).to_string()}</div> }).collect::<Html>() }
+                                        { domains[r][c].clone().map(|e| html!{ <div>{format!("{:X}", (e + 1) & 0xf)}</div> }).collect::<Html>() }
                                     </div>
                                     <div class="sudoku-cell-input" tabindex="0" type="number" ref={cells[r][c].clone()}>{
                                         if let Some(v) = sudoku[r][c] {
-                                            v.to_string()
+                                            format!("{:X}", v & 0xf)
                                         } else {
                                             "".to_owned()
                                         }
@@ -161,12 +166,12 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
                     ).collect::<Html>() }
                 </div>
             </div>
-            <div class="sudoku-input">
-                { (0..=9).map(|n| html! {
+            <div class={classes!("sudoku-input", format!("sudoku-input-{N}"))}>
+                { (0..=N as u32).map(|n| html! {
                     <button
                         class={classes!("number-button", format!("number-button-{}", n))}
                         onclick={onclick(n)}
-                    >{ if n == 0 { "_".to_owned() } else { n.to_string() } }</button>
+                    >{ if n == 0 { "_".to_owned() } else { format!("{:X}", n & 0xf) } }</button>
                 }).collect::<Html>() }
             </div>
         </div>

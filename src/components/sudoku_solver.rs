@@ -66,8 +66,8 @@ fn count_domain_values<const N: usize>(domains: &SudokuDomains<N>) -> usize {
 }
 
 fn is_sudoku_subset<const N: usize>(new: &Sudoku<N>, hist: &Sudoku<N>) -> bool {
-    for i in 0..9 {
-        for j in 0..9 {
+    for i in 0..N {
+        for j in 0..N {
             if hist[i][j] != None && new[i][j] != hist[i][j] {
                 return false;
             }
@@ -77,8 +77,8 @@ fn is_sudoku_subset<const N: usize>(new: &Sudoku<N>, hist: &Sudoku<N>) -> bool {
 }
 
 fn adjust_domains<const N: usize>(mut domains: SudokuDomains<N>, sudoku: &Sudoku<N>) -> SudokuDomains<N> {
-    for i in 0..9 {
-        for j in 0..9 {
+    for i in 0..N {
+        for j in 0..N {
             if let Some(v) = sudoku[i][j] {
                 domains[i][j] = DomainSet::singelton(v - 1);
             }

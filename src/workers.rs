@@ -33,7 +33,7 @@ impl<const N: usize> Agent for SolvingWorker<N>
     }
 
     fn name_of_resource() -> &'static str {
-        "worker_solve.js"
+        Box::leak(format!("worker_solve{N}.js").into_boxed_str())
     }
 
     fn resource_path_is_relative() -> bool {
@@ -67,7 +67,7 @@ impl<const N: usize> Agent for ReducingWorker<N> where Sudoku<N>: Serialize +Des
     }
 
     fn name_of_resource() -> &'static str {
-        "worker_reduce.js"
+        Box::leak(format!("worker_reduce{N}.js").into_boxed_str())
     }
 
     fn resource_path_is_relative() -> bool {
@@ -103,7 +103,7 @@ where SudokuDomains<N>: Serialize + DeserializeOwned
     }
 
     fn name_of_resource() -> &'static str {
-        "worker_minimize.js"
+        Box::leak(format!("worker_minimize{N}.js").into_boxed_str())
     }
 
     fn resource_path_is_relative() -> bool {

@@ -47,17 +47,93 @@
         &.sudoku-reducing .sudoku-cell-result {
             animation: reducing-animation 750ms ease-in-out infinite;
         }
-        
+
         .sudoku-grid {
             display: grid;
-            grid-template-columns: repeat(9, 1fr);
-            grid-template-rows: repeat(9, 1fr);
             align-items: stretch;
             justify-items: stretch;
             width: min(90vw, 70vh);
             height: min(90vw, 70vh);
             border: 2px solid vars.$darktext;
             outline: 0.2rem solid white;
+
+            &.sudoku-grid-9 {
+                grid-template-columns: repeat(9, 1fr);
+                grid-template-rows: repeat(9, 1fr);
+                font-size: min(7.2vw, 6vh);
+
+                .sudoku-cell-x-2, .sudoku-cell-x-5 {
+                    border-right: 2px solid vars.$darktext;
+                }
+
+                .sudoku-cell-2-x, .sudoku-cell-5-x {
+                    border-bottom: 2px solid vars.$darktext;
+                }
+
+                .sudoku-cell {
+                    top: min(0.5vw, 0.5vh);
+                    left: min(0.5vw, 0.5vh);
+                    right: min(0.5vw, 0.5vh);
+                    bottom: min(0.5vw, 0.5vh);
+
+                    &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
+                        font-size: min(2.16vw, 1.8vh);
+                    }
+
+                    &.sudoku-results-6, &.sudoku-results-5 {
+                        font-size: min(2.88vw, 2.4vh);
+                    }
+
+                    &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
+                        font-size: min(2.88vw, 2.4vh);
+                    }
+
+                    &.sudoku-results-2 {
+                        font-size: min(4.32vw, 3.6vh);
+                    }
+
+                    &.sudoku-results-1 {
+                        font-size: min(5.76vw, 4.8vh);
+                    }
+                }
+            }
+
+            &.sudoku-grid-16 {
+                grid-template-columns: repeat(16, 1fr);
+                grid-template-rows: repeat(16, 1fr);
+                font-size: min(4.05vw, 3.375vh);
+
+                .sudoku-cell-x-3, .sudoku-cell-x-7, .sudoku-cell-x-11 {
+                    border-right: 2px solid vars.$darktext;
+                }
+
+                .sudoku-cell-3-x, .sudoku-cell-7-x, .sudoku-cell-11-x {
+                    border-bottom: 2px solid vars.$darktext;
+                }
+
+                .sudoku-cell-result {
+                    top: min(0.1vw, 0.1vh);
+                    left: min(0.1vw, 0.1vh);
+                    right: min(0.1vw, 0.1vh);
+                    bottom: min(0.1vw, 0.1vh);
+                
+                    &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
+                        font-size: min(1.3vw, 1.08vh);
+                    }
+
+                    &.sudoku-results-6, &.sudoku-results-5, &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
+                        font-size: min(2.16vw, 1.8vh);
+                    }
+
+                    &.sudoku-results-2 {
+                        font-size: min(3.24vw, 2.7vh);
+                    }
+
+                    &.sudoku-results-1 {
+                        font-size: min(4.32vw, 3.6vh);
+                    }
+                }
+            }
 
             @media (min-aspect-ratio: 16/15) {
                 width: min(90vw, 75vh);
@@ -71,26 +147,15 @@
                 background: vars.$paper;
                 transition: background-color 200ms ease-in;
 
-                &.sudoku-cell-x-2, &.sudoku-cell-x-5 {
-                    border-right: 2px solid vars.$darktext;
-                }
-
-                &.sudoku-cell-2-x, &.sudoku-cell-5-x {
-                    border-bottom: 2px solid vars.$darktext;
-                }
-
                 .sudoku-cell-result {
                     color: vars.$lighttext;
                     position: absolute;
-                    top: min(0.5vw, 0.5vh);
-                    left: min(0.5vw, 0.5vh);
-                    right: min(0.5vw, 0.5vh);
-                    bottom: min(0.5vw, 0.5vh);
                     pointer-events: none;
                     display: flex;
                     flex-flow: row wrap;
                     align-items: center;
                     justify-content: center;
+                    align-content: center;
                     transition: all 100ms linear;
                     overflow: hidden;
                     user-select: none;
@@ -103,32 +168,19 @@
                         transition: all 100ms linear;
                     }
 
-                    &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
-                        font-size: min(2.16vw, 1.8vh);
+                    &.sudoku-results-16, &.sudoku-results-15, &.sudoku-results-14, &.sudoku-results-13,
+                    &.sudoku-results-12, &.sudoku-results-11, &.sudoku-results-10 {
+                        display: none;
                     }
-
-                    &.sudoku-results-6, &.sudoku-results-5 {
-                        font-size: min(2.88vw, 2.4vh);
-                    }
-
+                    
                     &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
-                        font-size: min(2.88vw, 2.4vh);
-
                         div {
                             width: 45%;
                         }
                     }
-
-                    &.sudoku-results-2 {
-                        font-size: min(4.32vw, 3.6vh);
-                    }
-
-                    &.sudoku-results-1 {
-                        font-size: min(5.76vw, 4.8vh);
-
-                        div {
-                            width: 90%;
-                        }
+                    
+                    &.sudoku-results-1 div {
+                        width: 90%;
                     }
                 }
 
@@ -148,7 +200,6 @@
                     display: grid;
                     align-content: center;
                     justify-content: center;
-                    font-size: min(7.2vw, 6vh);
                     user-select: none;
                     border: 0px solid vars.$active;
                     caret-color: transparent;
@@ -186,7 +237,14 @@
     .sudoku-input {
         display: grid;
         margin-top: min(1vw, 1vh);
-        grid-template-columns: repeat(10, 1fr);
+
+        &.sudoku-input-9 {
+            grid-template-columns: repeat(10, 1fr);
+        }
+        
+        &.sudoku-input-16 {
+            grid-template-columns: repeat(9, 1fr);
+        }
 
         .number-button {
             display: block;
@@ -212,17 +270,35 @@
         }
 
         @media (max-aspect-ratio: 5/9) {
-            grid-template-columns: repeat(5, 1fr);
-            margin-top: 4vh;
+            &.sudoku-input-9 {
+                grid-template-columns: repeat(5, 1fr);
+                margin-top: 4vh;
 
-            .number-button {
-                width: 15vw;
-                height: 10vw;
+                .number-button {
+                    width: 15vw;
+                    height: 10vw;
+                }
+            }
+            
+            &.sudoku-input-16 {
+                grid-template-columns: repeat(6, 1fr);
+                margin-top: 4vh;
+
+                .number-button {
+                    width: 15vw;
+                    height: 15vw;
+                }
             }
         }
 
         @media (min-aspect-ratio: 16/15) {
-            grid-template-columns: repeat(1, 1fr);
+            &.sudoku-input-9 {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            &.sudoku-input-16 {
+                grid-template-columns: repeat(2, 1fr);
+            }
         }
     }
 }
