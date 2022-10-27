@@ -1,52 +1,53 @@
 
 use crate::solver::{solver::Problem, domain::DomainSet};
 
-pub type Sudoku = [[Option<u32>; 9]; 9];
-pub type SudokuDomains = [[DomainSet; 9]; 9];
+pub type Sudoku<const N: usize> = [[Option<u32>; N]; N];
+pub type SudokuDomains<const N: usize> = [[DomainSet; N]; N];
 
-pub fn empty_sudoku() -> Sudoku {
-    [[Option::<u32>::None; 9]; 9]
+pub fn empty_sudoku<const N: usize>() -> Sudoku<N> {
+    [[Option::<u32>::None; N]; N]
 }
 
-pub fn empty_domains() -> SudokuDomains {
-    [[DomainSet::empty(); 9]; 9]
+pub fn empty_domains<const N: usize>() -> SudokuDomains<N> {
+    [[DomainSet::empty(); N]; N]
 }
 
-pub fn default_domains() -> SudokuDomains {
-    [[DomainSet::range(0..9); 9]; 9]
+pub fn default_domains<const N: usize>() -> SudokuDomains<N> {
+    [[DomainSet::range(0..N as u32); N]; N]
 }
 
-pub fn sudoku_domains(sudoku: &Sudoku) -> SudokuDomains {
+pub fn sudoku_domains<const N: usize>(sudoku: &Sudoku<N>) -> SudokuDomains<N> {
     let mut res = empty_domains();
-    for i in 0..9 {
-        for j in 0..9 {
+    for i in 0..N {
+        for j in 0..N {
             if let Some(v) = sudoku[i][j] {
                 res[i][j] = DomainSet::singelton(v - 1);
             } else {
-                res[i][j] = DomainSet::range(0..9);
+                res[i][j] = DomainSet::range(0..N as u32);
             }
         }
     }
     return res;
 }
 
-pub fn create_problem(sudoku: &SudokuDomains) -> Problem {
-    let mut prob = Problem::with_capacity(9*9, 3*9);
+pub fn create_problem<const N: usize>(sudoku: &SudokuDomains<N>) -> Problem {
+    let mut prob = Problem::with_capacity(N*N, 3*N);
     for row in sudoku {
         for cel in row {
             prob.add_variable(*cel);
         }
     }
-    for i in 0..9 {
-        let mut row = Vec::with_capacity(9);
-        let mut col = Vec::with_capacity(9);
-        let mut cell = Vec::with_capacity(9);
-        for j in 0..9 {
-            row.push(9 * i + j);
-            col.push(9 * j + i);
-            let ii = 3 * (i / 3) + j / 3;
-            let jj = 3 * (i % 3) + j % 3;
-            cell.push(9 * ii + jj)
+    for i in 0..N {
+        let mut row = Vec::with_capacity(N);
+        let mut col = Vec::with_capacity(N);
+        let mut cell = Vec::with_capacity(N);
+        for j in 0..N {
+            row.push(N * i + j);
+            col.push(N * j + i);
+            let sr = (N as f64).sqrt() as usize;
+            let ii = sr * (i / sr) + j / sr;
+            let jj = sr * (i % sr) + j % sr;
+            cell.push(N * ii + jj)
         }
         prob.add_constraint(row);
         prob.add_constraint(col);
@@ -55,18 +56,18 @@ pub fn create_problem(sudoku: &SudokuDomains) -> Problem {
     return prob;
 }
 
-pub fn resize_variables(variables: Vec<u32>) -> Sudoku {
+pub fn resize_variables<const N: usize>(variables: Vec<u32>) -> Sudoku<N> {
     let mut res = empty_sudoku();
     for (i, v) in variables.iter().enumerate() {
-        res[i / 9][i % 9] = Some(*v + 1);
+        res[i / N][i % N] = Some(*v + 1);
     }
     return res;
 }
 
-pub fn resize_domains(domains: Vec<DomainSet>) -> SudokuDomains {
+pub fn resize_domains<const N: usize>(domains: Vec<DomainSet>) -> SudokuDomains<N> {
     let mut res = empty_domains();
     for (i, v) in domains.iter().enumerate() {
-        res[i / 9][i % 9] = *v;
+        res[i / N][i % N] = *v;
     }
     return res;
 }

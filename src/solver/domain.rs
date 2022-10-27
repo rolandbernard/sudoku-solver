@@ -4,7 +4,7 @@ use std::ops::{BitAnd, BitOr, Not, Range};
 
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct DomainSet {
-    bitset: u32,
+    bitset: u64,
 }
 
 impl DomainSet {

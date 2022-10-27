@@ -1,4 +1,5 @@
 
+use serde::{Serialize, de::DeserializeOwned};
 use yew::prelude::*;
 use yew_agent::{Bridge, Bridged};
 
@@ -7,27 +8,27 @@ use crate::solver::sudoku::{empty_sudoku, default_domains, Sudoku, SudokuDomains
 use crate::workers::{SolvingWorker, ReducingWorker, MinimizingWorker};
 use crate::components::sudoku_input::SudokuInput;
 
-pub enum SolverMessage {
-    Change(Sudoku),
+pub enum SolverMessage<const N: usize> {
+    Change(Sudoku<N>),
     Solve,
     Clear,
-    Solved(Option<Sudoku>, usize),
-    Reduced(SudokuDomains, usize),
-    Minimized(SudokuDomains, usize),
+    Solved(Option<Sudoku<N>>, usize),
+    Reduced(SudokuDomains<N>, usize),
+    Minimized(SudokuDomains<N>, usize),
     Undo,
     Redo,
 }
 
 #[derive(Clone)]
-pub struct SudokuHistoryItem {
-    sudoku: Sudoku,
-    domains: SudokuDomains,
+pub struct SudokuHistoryItem<const N: usize> {
+    sudoku: Sudoku<N>,
+    domains: SudokuDomains<N>,
     change: usize,
     prog: i32,
     solved: Option<bool>,
 }
 
-impl SudokuHistoryItem {
+impl<const N: usize> SudokuHistoryItem<N> {
     fn default() -> Self {
         SudokuHistoryItem {
             sudoku: empty_sudoku(),
@@ -39,19 +40,22 @@ impl SudokuHistoryItem {
     }
 }
 
-pub struct SudokuSolver {
-    history: Vec<SudokuHistoryItem>,
+pub struct SudokuSolver<const N: usize> 
+where Sudoku<N>: Serialize + DeserializeOwned,
+SudokuDomains<N>: Serialize + DeserializeOwned
+{
+    history: Vec<SudokuHistoryItem<N>>,
     hist_pos: usize,
     change: usize,
     solving: Option<usize>,
     reducing: Option<usize>,
     minimizing: Option<usize>,
-    minimize_bridge: Box<dyn Bridge<MinimizingWorker>>,
-    reduce_bridge: Box<dyn Bridge<ReducingWorker>>,
-    solver_bridge: Box<dyn Bridge<SolvingWorker>>,
+    minimize_bridge: Box<dyn Bridge<MinimizingWorker<N>>>,
+    reduce_bridge: Box<dyn Bridge<ReducingWorker<N>>>,
+    solver_bridge: Box<dyn Bridge<SolvingWorker<N>>>,
 }
 
-fn count_domain_values(domains: &SudokuDomains) -> usize {
+fn count_domain_values<const N: usize>(domains: &SudokuDomains<N>) -> usize {
     let mut res = 0;
     for row in domains {
         for cell in row {
@@ -61,7 +65,7 @@ fn count_domain_values(domains: &SudokuDomains) -> usize {
     return res;
 }
 
-fn is_sudoku_subset(new: &Sudoku, hist: &Sudoku) -> bool {
+fn is_sudoku_subset<const N: usize>(new: &Sudoku<N>, hist: &Sudoku<N>) -> bool {
     for i in 0..9 {
         for j in 0..9 {
             if hist[i][j] != None && new[i][j] != hist[i][j] {
@@ -72,7 +76,7 @@ fn is_sudoku_subset(new: &Sudoku, hist: &Sudoku) -> bool {
     return true;
 }
 
-fn adjust_domains(mut domains: SudokuDomains, sudoku: &Sudoku) -> SudokuDomains {
+fn adjust_domains<const N: usize>(mut domains: SudokuDomains<N>, sudoku: &Sudoku<N>) -> SudokuDomains<N> {
     for i in 0..9 {
         for j in 0..9 {
             if let Some(v) = sudoku[i][j] {
@@ -83,7 +87,7 @@ fn adjust_domains(mut domains: SudokuDomains, sudoku: &Sudoku) -> SudokuDomains 
     return domains;
 }
 
-impl SudokuSolver {
+impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned {
     fn has_no_solution(&self) -> bool {
         if self.current_history().solved == Some(false) {
             return true;
@@ -117,11 +121,11 @@ impl SudokuSolver {
         self.current_history().prog < 2
     }
 
-    fn current_history(&self) -> &SudokuHistoryItem {
+    fn current_history(&self) -> &SudokuHistoryItem<N> {
         &self.history[self.hist_pos]
     }
 
-    fn current_history_mut(&mut self) -> &mut SudokuHistoryItem {
+    fn current_history_mut(&mut self) -> &mut SudokuHistoryItem<N> {
         &mut self.history[self.hist_pos]
     }
 
@@ -141,7 +145,7 @@ impl SudokuSolver {
         }
     }
 
-    fn history_push(&mut self, mut hist: SudokuHistoryItem) {
+    fn history_push(&mut self, mut hist: SudokuHistoryItem<N>) {
         self.change += 1;
         hist.change = self.change;
         if self.hist_pos < self.history.len() - 1 {
@@ -151,7 +155,7 @@ impl SudokuSolver {
         self.hist_pos += 1;
     }
 
-    fn smallest_subset(&self, sudoku: &Sudoku) -> Option<usize> {
+    fn smallest_subset(&self, sudoku: &Sudoku<N>) -> Option<usize> {
         let mut min_count = count_domain_values(&sudoku_domains(sudoku));
         let mut best = None;
         for i in (0..self.history.len()).rev() {
@@ -164,7 +168,7 @@ impl SudokuSolver {
         return best;
     }
 
-    fn history_push_sudoku(&mut self, sudoku: Sudoku) {
+    fn history_push_sudoku(&mut self, sudoku: Sudoku<N>) {
         if sudoku != self.current_history().sudoku {
             for i in (0..self.history.len()).rev() {
                 if self.history[i].sudoku == sudoku && self.history[i].prog != -1 {
@@ -189,11 +193,14 @@ impl SudokuSolver {
     }
 }
 
-impl Component for SudokuSolver {
-    type Message = SolverMessage;
+impl<const N: usize> Component for SudokuSolver<N>
+        where Sudoku<N>: Serialize + DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned
+{
+    type Message = SolverMessage<N>;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self {
+    fn create(ctx: &Context<Self>) -> Self 
+    {
         Self {
             history: vec![SudokuHistoryItem::default()],
             hist_pos: 0, change: 0,
@@ -287,7 +294,7 @@ impl Component for SudokuSolver {
     fn view(&self, ctx: &Context<Self>) -> Html {
         html! {
             <div class="sudoku-solver">
-                <SudokuInput
+                <SudokuInput<N>
                     sudoku={self.current_history().sudoku}
                     domains={self.current_history().domains}
                     working={self.solving != None}
@@ -324,7 +331,7 @@ impl Component for SudokuSolver {
                             onclick={ctx.link().callback(|_| Self::Message::Clear)}
                         >{"Clear"}</button>
                     </div>
-                </SudokuInput>
+                </SudokuInput<N>>
             </div>
         }
     }

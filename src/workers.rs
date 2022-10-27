@@ -1,16 +1,21 @@
 
+use serde::{Serialize, de::DeserializeOwned};
 use yew_agent::{HandlerId, Public, Agent, AgentLink};
 
 use crate::solver::sudoku::*;
 
-pub struct SolvingWorker {
+pub struct SolvingWorker<const N: usize> 
+    where Sudoku<N>: Serialize + DeserializeOwned
+{
     link: AgentLink<Self>,
 }
 
-impl Agent for SolvingWorker {
-    type Input = (Sudoku, usize);
+impl<const N: usize> Agent for SolvingWorker<N> 
+    where Sudoku<N>: Serialize + DeserializeOwned
+{
+    type Input = (Sudoku<N>, usize);
     type Message = ();
-    type Output = (Option<Sudoku>, usize);
+    type Output = (Option<Sudoku<N>>, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -36,14 +41,16 @@ impl Agent for SolvingWorker {
     }
 }
 
-pub struct ReducingWorker {
+pub struct ReducingWorker<const N: usize> where Sudoku<N>: Serialize + DeserializeOwned,
+SudokuDomains<N>: Serialize + DeserializeOwned
+{
     link: AgentLink<Self>,
 }
 
-impl Agent for ReducingWorker {
-    type Input = (SudokuDomains, usize);
+impl<const N: usize> Agent for ReducingWorker<N> where Sudoku<N>: Serialize +DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned{
+    type Input = (SudokuDomains<N>, usize);
     type Message = ();
-    type Output = (SudokuDomains, usize);
+    type Output = (SudokuDomains<N>, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {
@@ -68,14 +75,18 @@ impl Agent for ReducingWorker {
     }
 }
 
-pub struct MinimizingWorker {
+pub struct MinimizingWorker<const N: usize>
+where SudokuDomains<N>: Serialize + DeserializeOwned
+{
     link: AgentLink<Self>,
 }
 
-impl Agent for MinimizingWorker {
-    type Input = (SudokuDomains, usize);
+impl<const N: usize> Agent for MinimizingWorker<N> 
+where SudokuDomains<N>: Serialize + DeserializeOwned
+{
+    type Input = (SudokuDomains<N>, usize);
     type Message = ();
-    type Output = (SudokuDomains, usize);
+    type Output = (SudokuDomains<N>, usize);
     type Reach = Public<Self>;
 
     fn create(link: AgentLink<Self>) -> Self {

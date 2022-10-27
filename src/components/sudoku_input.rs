@@ -2,14 +2,14 @@
 use yew::{prelude::*, Properties, Children};
 use web_sys::HtmlElement;
 
-use crate::solver::sudoku::{Sudoku, SudokuDomains, empty_domains};
+use crate::solver::sudoku::{empty_domains, Sudoku, SudokuDomains};
 
-fn change_sudoku(mut sudoku: Sudoku, row: usize, col: usize, put: Option<u32>) -> Sudoku {
+fn change_sudoku<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, put: Option<u32>) -> Sudoku<N> {
     sudoku[row][col] = put;
     return sudoku;
 }
 
-fn sudoku_change(mut sudoku: Sudoku, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku {
+fn sudoku_change<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku<N> {
     let key = event.key_code();
     if key >= ('1' as u32) && key <= ('9' as u32) {
         sudoku[row][col] = Some(key - ('0' as u32));
@@ -49,20 +49,20 @@ fn focus_change(cells: &Vec<Vec<NodeRef>>, row: usize, col: usize, event: &Keybo
 }
 
 #[derive(Properties, PartialEq)]
-pub struct Props {
+pub struct Props<const N: usize> {
     pub children: Children,
-    pub sudoku: Sudoku,
+    pub sudoku: Sudoku<N>,
     #[prop_or(empty_domains())]
-    pub domains: SudokuDomains,
+    pub domains: SudokuDomains<N>,
     #[prop_or(false)]
     pub working: bool,
     #[prop_or(false)]
     pub reducing: bool,
-    pub on_change: Callback<Sudoku>,
+    pub on_change: Callback<Sudoku<N>>,
 }
 
 #[function_component(SudokuInput)]
-pub fn sudoku_input(props: &Props) -> Html {
+pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
     let Props {children, sudoku, domains, working, reducing, on_change} = props;
     let selected = use_state_eq(|| None);
     let last = use_state_eq(|| None);
