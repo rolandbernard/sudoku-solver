@@ -1,15 +1,24 @@
-
-use yew::{prelude::*, Properties, Children};
 use web_sys::HtmlElement;
+use yew::{prelude::*, Children, Properties};
 
 use crate::solver::sudoku::{empty_domains, Sudoku, SudokuDomains};
 
-fn change_sudoku<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, put: Option<u32>) -> Sudoku<N> {
+fn change_sudoku<const N: usize>(
+    mut sudoku: Sudoku<N>,
+    row: usize,
+    col: usize,
+    put: Option<u32>,
+) -> Sudoku<N> {
     sudoku[row][col] = put;
     return sudoku;
 }
 
-fn sudoku_change<const N: usize>(mut sudoku: Sudoku<N>, row: usize, col: usize, event: &KeyboardEvent) -> Sudoku<N> {
+fn sudoku_change<const N: usize>(
+    mut sudoku: Sudoku<N>,
+    row: usize,
+    col: usize,
+    event: &KeyboardEvent,
+) -> Sudoku<N> {
     let key = event.key_code();
     if key >= ('1' as u32) && key <= ('9' as u32) && key - ('0' as u32) <= N as u32 {
         sudoku[row][col] = Some(key - ('0' as u32));
@@ -67,7 +76,14 @@ pub struct Props<const N: usize> {
 
 #[function_component(SudokuInput)]
 pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
-    let Props {children, sudoku, domains, working, reducing, on_change} = props;
+    let Props {
+        children,
+        sudoku,
+        domains,
+        working,
+        reducing,
+        on_change,
+    } = props;
     let selected = use_state_eq(|| None);
     let last = use_state_eq(|| None);
     let mut cells = Vec::new();
@@ -177,4 +193,3 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
         </div>
     }
 }
-

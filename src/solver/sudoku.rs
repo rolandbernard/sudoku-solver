@@ -1,5 +1,4 @@
-
-use crate::solver::{solver::Problem, domain::DomainSet};
+use crate::solver::{domain::DomainSet, solver::Problem};
 
 pub type Sudoku<const N: usize> = [[Option<u32>; N]; N];
 pub type SudokuDomains<const N: usize> = [[DomainSet; N]; N];
@@ -21,7 +20,7 @@ pub fn sudoku_domains<const N: usize>(sudoku: &Sudoku<N>) -> SudokuDomains<N> {
     for i in 0..N {
         for j in 0..N {
             if let Some(v) = sudoku[i][j] {
-                res[i][j] = DomainSet::singelton(v - 1);
+                res[i][j] = DomainSet::singleton(v - 1);
             } else {
                 res[i][j] = DomainSet::range(0..N as u32);
             }
@@ -31,7 +30,7 @@ pub fn sudoku_domains<const N: usize>(sudoku: &Sudoku<N>) -> SudokuDomains<N> {
 }
 
 pub fn create_problem<const N: usize>(sudoku: &SudokuDomains<N>) -> Problem {
-    let mut prob = Problem::with_capacity(N*N, 3*N);
+    let mut prob = Problem::with_capacity(N * N, 3 * N);
     for row in sudoku {
         for cel in row {
             prob.add_variable(*cel);
@@ -71,4 +70,3 @@ pub fn resize_domains<const N: usize>(domains: Vec<DomainSet>) -> SudokuDomains<
     }
     return res;
 }
-

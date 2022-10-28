@@ -1,17 +1,18 @@
-
-use serde::{Serialize, de::DeserializeOwned};
-use yew_agent::{HandlerId, Public, Agent, AgentLink};
+use serde::{de::DeserializeOwned, Serialize};
+use yew_agent::{Agent, AgentLink, HandlerId, Public};
 
 use crate::solver::sudoku::*;
 
-pub struct SolvingWorker<const N: usize> 
-    where Sudoku<N>: Serialize + DeserializeOwned
+pub struct SolvingWorker<const N: usize>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
 {
     link: AgentLink<Self>,
 }
 
-impl<const N: usize> Agent for SolvingWorker<N> 
-    where Sudoku<N>: Serialize + DeserializeOwned
+impl<const N: usize> Agent for SolvingWorker<N>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
 {
     type Input = (Sudoku<N>, usize);
     type Message = ();
@@ -27,8 +28,7 @@ impl<const N: usize> Agent for SolvingWorker<N>
     fn handle_input(&mut self, msg: Self::Input, id: HandlerId) {
         let (sudoku, change) = msg;
         let prob = create_problem(&sudoku_domains(&sudoku));
-        let result = prob.find_model()
-            .and_then(|v| Some(resize_variables(v)));
+        let result = prob.find_model().and_then(|v| Some(resize_variables(v)));
         self.link.respond(id, (result, change));
     }
 
@@ -41,13 +41,19 @@ impl<const N: usize> Agent for SolvingWorker<N>
     }
 }
 
-pub struct ReducingWorker<const N: usize> where Sudoku<N>: Serialize + DeserializeOwned,
-SudokuDomains<N>: Serialize + DeserializeOwned
+pub struct ReducingWorker<const N: usize>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
+    SudokuDomains<N>: Serialize + DeserializeOwned,
 {
     link: AgentLink<Self>,
 }
 
-impl<const N: usize> Agent for ReducingWorker<N> where Sudoku<N>: Serialize +DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned{
+impl<const N: usize> Agent for ReducingWorker<N>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
+    SudokuDomains<N>: Serialize + DeserializeOwned,
+{
     type Input = (SudokuDomains<N>, usize);
     type Message = ();
     type Output = (SudokuDomains<N>, usize);
@@ -76,13 +82,15 @@ impl<const N: usize> Agent for ReducingWorker<N> where Sudoku<N>: Serialize +Des
 }
 
 pub struct MinimizingWorker<const N: usize>
-where SudokuDomains<N>: Serialize + DeserializeOwned
+where
+    SudokuDomains<N>: Serialize + DeserializeOwned,
 {
     link: AgentLink<Self>,
 }
 
-impl<const N: usize> Agent for MinimizingWorker<N> 
-where SudokuDomains<N>: Serialize + DeserializeOwned
+impl<const N: usize> Agent for MinimizingWorker<N>
+where
+    SudokuDomains<N>: Serialize + DeserializeOwned,
 {
     type Input = (SudokuDomains<N>, usize);
     type Message = ();
@@ -110,4 +118,3 @@ where SudokuDomains<N>: Serialize + DeserializeOwned
         true
     }
 }
-

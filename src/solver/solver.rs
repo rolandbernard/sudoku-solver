@@ -1,4 +1,3 @@
-
 use crate::solver::domain::DomainSet;
 
 pub struct Problem {
@@ -9,9 +8,13 @@ pub struct Problem {
 
 impl Problem {
     pub fn empty() -> Problem {
-        Problem { domains: Vec::new(), constrained: Vec::new(), constraints: Vec::new(), }
+        Problem {
+            domains: Vec::new(),
+            constrained: Vec::new(),
+            constraints: Vec::new(),
+        }
     }
-    
+
     pub fn with_capacity(variables: usize, constraints: usize) -> Problem {
         Problem {
             domains: Vec::with_capacity(variables),
@@ -36,9 +39,7 @@ impl Problem {
     pub fn find_model(&self) -> Option<Vec<u32>> {
         let mut state = ProblemState::from_problem(self);
         if state.solve(None) {
-            return state.domains.into_iter()
-                .map(|v| v.get_any())
-                .collect();
+            return state.domains.into_iter().map(|v| v.get_any()).collect();
         } else {
             return None;
         }
@@ -47,9 +48,7 @@ impl Problem {
     pub fn find_model_with(&self, prefer: &[DomainSet]) -> Option<Vec<u32>> {
         let mut state = ProblemState::from_problem(self);
         if state.solve_with(None, prefer) {
-            return state.domains.into_iter()
-                .map(|v| v.get_any())
-                .collect();
+            return state.domains.into_iter().map(|v| v.get_any()).collect();
         } else {
             return None;
         }
@@ -82,7 +81,12 @@ impl<'a> ProblemState<'a> {
         }
     }
 
-    fn reduce_singeltons(&self, constr: &[usize], mut remove: DomainSet, mut taken: DomainSet) -> bool {
+    fn reduce_singletons(
+        &self,
+        constr: &[usize],
+        mut remove: DomainSet,
+        mut taken: DomainSet,
+    ) -> bool {
         let mut left = constr.len() - taken.len();
         let mut change = true;
         while change && left > 0 {
@@ -90,7 +94,7 @@ impl<'a> ProblemState<'a> {
             for (i, &w) in constr.iter().enumerate() {
                 if !taken.contains(i as u32) {
                     let rem = self.domains[w].without_all(remove);
-                    if rem.is_singelton() {
+                    if rem.is_singleton() {
                         remove.add_all(rem);
                         taken.add(i as u32);
                         left -= 1;
@@ -114,11 +118,20 @@ impl<'a> ProblemState<'a> {
         }
     }
 
-    fn reduce_constraint(&mut self, constr: &[usize], changed: &mut bool, changes: &mut DomainSet) -> bool {
+    fn reduce_constraint(
+        &mut self,
+        constr: &[usize],
+        changed: &mut bool,
+        changes: &mut DomainSet,
+    ) -> bool {
         for (i, &v) in constr.iter().enumerate() {
             let old = self.domains[v];
             for j in self.domains[v] {
-                if !self.reduce_singeltons(constr, DomainSet::singelton(j), DomainSet::singelton(i as u32)) {
+                if !self.reduce_singletons(
+                    constr,
+                    DomainSet::singleton(j),
+                    DomainSet::singleton(i as u32),
+                ) {
                     self.domains[v].remove(j);
                     if self.domains[v].is_empty() {
                         return false;
@@ -158,7 +171,7 @@ impl<'a> ProblemState<'a> {
                 }
             }
         }
-        return true
+        return true;
     }
 
     fn solve(&mut self, i: Option<usize>) -> bool {
@@ -170,10 +183,10 @@ impl<'a> ProblemState<'a> {
             return false;
         }
         for (i, v) in self.domains.iter().enumerate() {
-            if !v.is_singelton() {
+            if !v.is_singleton() {
                 for j in (*v & prefer[i]).chain(v.without_all(prefer[i])) {
                     let mut copy = self.clone();
-                    copy.domains[i] = DomainSet::singelton(j);
+                    copy.domains[i] = DomainSet::singleton(j);
                     if copy.solve_with(Some(i), prefer) {
                         self.domains = copy.domains;
                         return true;
@@ -188,10 +201,10 @@ impl<'a> ProblemState<'a> {
     fn minimize(&mut self) {
         self.reduce(None);
         let mut to_test = self.domains.clone();
-        for i in 0..self.domains.len(){
+        for i in 0..self.domains.len() {
             for j in to_test[i] {
                 let mut copy = self.clone();
-                copy.domains[i] = DomainSet::singelton(j);
+                copy.domains[i] = DomainSet::singleton(j);
                 if copy.solve_with(Some(i), &to_test) {
                     for (i, d) in copy.domains.iter().enumerate() {
                         to_test[i].remove_all(*d);
@@ -203,4 +216,3 @@ impl<'a> ProblemState<'a> {
         }
     }
 }
-

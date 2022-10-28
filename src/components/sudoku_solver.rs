@@ -1,12 +1,11 @@
-
-use serde::{Serialize, de::DeserializeOwned};
+use serde::{de::DeserializeOwned, Serialize};
 use yew::prelude::*;
 use yew_agent::{Bridge, Bridged};
 
-use crate::solver::domain::DomainSet;
-use crate::solver::sudoku::{empty_sudoku, default_domains, Sudoku, SudokuDomains, sudoku_domains};
-use crate::workers::{SolvingWorker, ReducingWorker, MinimizingWorker};
 use crate::components::sudoku_input::SudokuInput;
+use crate::solver::domain::DomainSet;
+use crate::solver::sudoku::{default_domains, empty_sudoku, sudoku_domains, Sudoku, SudokuDomains};
+use crate::workers::{MinimizingWorker, ReducingWorker, SolvingWorker};
 
 pub enum SolverMessage<const N: usize> {
     Change(Sudoku<N>),
@@ -40,9 +39,10 @@ impl<const N: usize> SudokuHistoryItem<N> {
     }
 }
 
-pub struct SudokuSolver<const N: usize> 
-where Sudoku<N>: Serialize + DeserializeOwned,
-SudokuDomains<N>: Serialize + DeserializeOwned
+pub struct SudokuSolver<const N: usize>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
+    SudokuDomains<N>: Serialize + DeserializeOwned,
 {
     history: Vec<SudokuHistoryItem<N>>,
     hist_pos: usize,
@@ -76,18 +76,25 @@ fn is_sudoku_subset<const N: usize>(new: &Sudoku<N>, hist: &Sudoku<N>) -> bool {
     return true;
 }
 
-fn adjust_domains<const N: usize>(mut domains: SudokuDomains<N>, sudoku: &Sudoku<N>) -> SudokuDomains<N> {
+fn adjust_domains<const N: usize>(
+    mut domains: SudokuDomains<N>,
+    sudoku: &Sudoku<N>,
+) -> SudokuDomains<N> {
     for i in 0..N {
         for j in 0..N {
             if let Some(v) = sudoku[i][j] {
-                domains[i][j] = DomainSet::singelton(v - 1);
+                domains[i][j] = DomainSet::singleton(v - 1);
             }
         }
     }
     return domains;
 }
 
-impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned {
+impl<const N: usize> SudokuSolver<N>
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
+    SudokuDomains<N>: Serialize + DeserializeOwned,
+{
     fn has_no_solution(&self) -> bool {
         if self.current_history().solved == Some(false) {
             return true;
@@ -108,7 +115,7 @@ impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwn
         if self.current_history().prog == 2 {
             for row in self.current_history().domains {
                 for cel in row {
-                    if !cel.is_singelton() {
+                    if !cel.is_singleton() {
                         return true;
                     }
                 }
@@ -137,11 +144,13 @@ impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwn
         };
         if self.reducing == None && self.current_history().prog < 1 {
             self.reducing = Some(self.current_history().change);
-            self.reduce_bridge.send((domains, self.current_history().change));
+            self.reduce_bridge
+                .send((domains, self.current_history().change));
         }
         if self.minimizing == None && self.current_history().prog < 2 {
             self.minimizing = Some(self.current_history().change);
-            self.minimize_bridge.send((domains, self.current_history().change));
+            self.minimize_bridge
+                .send((domains, self.current_history().change));
         }
     }
 
@@ -180,13 +189,17 @@ impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwn
                 self.history_push(SudokuHistoryItem {
                     sudoku,
                     domains: adjust_domains(self.history[idx].domains, &sudoku),
-                    change: 0, prog: 0, solved: None,
+                    change: 0,
+                    prog: 0,
+                    solved: None,
                 })
             } else {
                 self.history_push(SudokuHistoryItem {
                     sudoku,
                     domains: self.current_history().domains,
-                    change: 0, prog: -1, solved: None,
+                    change: 0,
+                    prog: -1,
+                    solved: None,
                 })
             }
         }
@@ -194,23 +207,33 @@ impl<const N: usize> SudokuSolver<N> where Sudoku<N>: Serialize + DeserializeOwn
 }
 
 impl<const N: usize> Component for SudokuSolver<N>
-        where Sudoku<N>: Serialize + DeserializeOwned, SudokuDomains<N>: Serialize + DeserializeOwned
+where
+    Sudoku<N>: Serialize + DeserializeOwned,
+    SudokuDomains<N>: Serialize + DeserializeOwned,
 {
     type Message = SolverMessage<N>;
     type Properties = ();
 
-    fn create(ctx: &Context<Self>) -> Self 
-    {
+    fn create(ctx: &Context<Self>) -> Self {
         Self {
             history: vec![SudokuHistoryItem::default()],
-            hist_pos: 0, change: 0,
-            solving: None, reducing: None, minimizing: None,
+            hist_pos: 0,
+            change: 0,
+            solving: None,
+            reducing: None,
+            minimizing: None,
             solver_bridge: SolvingWorker::bridge(
-                ctx.link().callback(|(sol, id)| Self::Message::Solved(sol, id))),
+                ctx.link()
+                    .callback(|(sol, id)| Self::Message::Solved(sol, id)),
+            ),
             reduce_bridge: ReducingWorker::bridge(
-                ctx.link().callback(|(sol, id)| Self::Message::Reduced(sol, id))),
+                ctx.link()
+                    .callback(|(sol, id)| Self::Message::Reduced(sol, id)),
+            ),
             minimize_bridge: MinimizingWorker::bridge(
-                ctx.link().callback(|(sol, id)| Self::Message::Minimized(sol, id))),
+                ctx.link()
+                    .callback(|(sol, id)| Self::Message::Minimized(sol, id)),
+            ),
         }
     }
 
@@ -221,20 +244,21 @@ impl<const N: usize> Component for SudokuSolver<N>
                     self.history_push_sudoku(new);
                     self.start_domain_compute();
                 }
-            },
+            }
             Self::Message::Solve => {
                 if self.solving == None {
                     self.solving = Some(self.change);
-                    self.solver_bridge.send((self.current_history().sudoku, self.change));
+                    self.solver_bridge
+                        .send((self.current_history().sudoku, self.change));
                 }
-            },
+            }
             Self::Message::Clear => {
                 if self.solving == None {
                     self.change += 1;
                     self.history = vec![SudokuHistoryItem::default()];
                     self.hist_pos = 0;
                 }
-            },
+            }
             Self::Message::Solved(res, id) => {
                 if self.solving == Some(id) {
                     self.solving = None;
@@ -248,7 +272,7 @@ impl<const N: usize> Component for SudokuSolver<N>
                         self.current_history_mut().solved = Some(false);
                     }
                 }
-            },
+            }
             Self::Message::Reduced(sol, id) => {
                 if self.reducing == Some(id) {
                     self.reducing = None;
@@ -261,7 +285,7 @@ impl<const N: usize> Component for SudokuSolver<N>
                     }
                 }
                 self.start_domain_compute();
-            },
+            }
             Self::Message::Minimized(sol, id) => {
                 if self.minimizing == Some(id) {
                     self.minimizing = None;
@@ -274,13 +298,13 @@ impl<const N: usize> Component for SudokuSolver<N>
                     }
                 }
                 self.start_domain_compute();
-            },
+            }
             Self::Message::Undo => {
                 if self.hist_pos != 0 {
                     self.hist_pos -= 1;
                     self.start_domain_compute();
                 }
-            },
+            }
             Self::Message::Redo => {
                 if self.hist_pos != self.history.len() - 1 {
                     self.hist_pos += 1;
@@ -336,4 +360,3 @@ impl<const N: usize> Component for SudokuSolver<N>
         }
     }
 }
-

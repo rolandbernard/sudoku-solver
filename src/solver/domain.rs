@@ -1,4 +1,3 @@
-
 use serde::{Deserialize, Serialize};
 use std::ops::{BitAnd, BitOr, Not, Range};
 
@@ -12,7 +11,7 @@ impl DomainSet {
         DomainSet { bitset: 0 }
     }
 
-    pub fn singelton(e: u32) -> Self {
+    pub fn singleton(e: u32) -> Self {
         let mut new = Self::empty();
         new.add(e);
         return new;
@@ -39,11 +38,15 @@ impl DomainSet {
     }
 
     pub fn without(&self, e: u32) -> Self {
-        DomainSet { bitset: self.bitset & !(1 << e) }
+        DomainSet {
+            bitset: self.bitset & !(1 << e),
+        }
     }
 
     pub fn without_all(&self, s: Self) -> Self {
-        DomainSet { bitset: self.bitset & !s.bitset }
+        DomainSet {
+            bitset: self.bitset & !s.bitset,
+        }
     }
 
     pub fn add_all(&mut self, s: Self) {
@@ -58,14 +61,14 @@ impl DomainSet {
         self.bitset &= s.bitset;
     }
 
-    pub fn is_singelton(&self) -> bool {
+    pub fn is_singleton(&self) -> bool {
         self.bitset.is_power_of_two()
     }
 
     pub fn is_empty(&self) -> bool {
         self.bitset == 0
     }
-    
+
     pub fn get_any(&self) -> Option<u32> {
         if self.is_empty() {
             None
@@ -83,7 +86,9 @@ impl BitAnd for DomainSet {
     type Output = DomainSet;
 
     fn bitand(self, rhs: Self) -> Self::Output {
-        DomainSet { bitset: self.bitset & rhs.bitset }
+        DomainSet {
+            bitset: self.bitset & rhs.bitset,
+        }
     }
 }
 
@@ -91,7 +96,9 @@ impl BitOr for DomainSet {
     type Output = DomainSet;
 
     fn bitor(self, rhs: Self) -> Self::Output {
-        DomainSet { bitset: self.bitset | rhs.bitset }
+        DomainSet {
+            bitset: self.bitset | rhs.bitset,
+        }
     }
 }
 
@@ -99,7 +106,9 @@ impl Not for DomainSet {
     type Output = DomainSet;
 
     fn not(self) -> Self::Output {
-        DomainSet { bitset: !self.bitset }
+        DomainSet {
+            bitset: !self.bitset,
+        }
     }
 }
 
@@ -116,4 +125,3 @@ impl Iterator for DomainSet {
         }
     }
 }
-

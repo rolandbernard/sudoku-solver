@@ -1,4 +1,3 @@
-
 use yew_agent::Threaded;
 
 use sudoku::workers::ReducingWorker;
@@ -6,4 +5,3 @@ use sudoku::workers::ReducingWorker;
 fn main() {
     ReducingWorker::<9>::register();
 }
-
