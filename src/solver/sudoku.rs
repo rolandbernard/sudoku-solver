@@ -55,7 +55,7 @@ pub fn create_problem<const N: usize>(sudoku: &SudokuDomains<N>) -> Problem {
     return prob;
 }
 
-pub fn resize_variables<const N: usize>(variables: Vec<u32>) -> Sudoku<N> {
+pub fn reshape_variables<const N: usize>(variables: Vec<u32>) -> Sudoku<N> {
     let mut res = empty_sudoku();
     for (i, v) in variables.iter().enumerate() {
         res[i / N][i % N] = Some(*v + 1);
@@ -63,10 +63,14 @@ pub fn resize_variables<const N: usize>(variables: Vec<u32>) -> Sudoku<N> {
     return res;
 }
 
-pub fn resize_domains<const N: usize>(domains: Vec<DomainSet>) -> SudokuDomains<N> {
+pub fn reshape_domains<const N: usize>(domains: Vec<DomainSet>) -> SudokuDomains<N> {
     let mut res = empty_domains();
     for (i, v) in domains.iter().enumerate() {
         res[i / N][i % N] = *v;
     }
     return res;
+}
+
+pub fn flatten_domains<const N: usize>(domains: SudokuDomains<N>) -> Vec<DomainSet> {
+    domains.into_iter().flatten().collect()
 }

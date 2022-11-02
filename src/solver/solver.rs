@@ -1,3 +1,6 @@
+#[cfg(not(target_arch="wasm32"))]
+use std::time::SystemTime;
+
 use crate::solver::domain::DomainSet;
 
 pub struct Problem {
@@ -54,7 +57,7 @@ impl Problem {
         }
     }
 
-    pub fn reduce_domains(&self) -> Vec<DomainSet> {
+    pub fn reduced_domains(&self) -> Vec<DomainSet> {
         let mut state = ProblemState::from_problem(self);
         state.reduce(None);
         return state.domains;
@@ -64,6 +67,16 @@ impl Problem {
         let mut state = ProblemState::from_problem(self);
         state.minimize();
         return state.domains;
+    }
+
+    pub fn minimize_domains_for(
+        &self,
+        mut unsure: Vec<DomainSet>,
+        timeout: u64,
+    ) -> (Vec<DomainSet>, Vec<DomainSet>) {
+        let mut state = ProblemState::from_problem(self);
+        state.minimize_for(&mut unsure, timeout);
+        return (state.domains, unsure);
     }
 }
 
@@ -198,21 +211,43 @@ impl<'a> ProblemState<'a> {
         return true;
     }
 
-    fn minimize(&mut self) {
+    #[cfg(target_arch="wasm32")]
+    fn get_time() -> u64 {
+        js_sys::Date::now() as u64
+    }
+    
+    #[cfg(not(target_arch="wasm32"))]
+    fn get_time() -> u64 {
+        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64
+    }
+
+    fn minimize_for(&mut self, unsure: &mut [DomainSet], timeout: u64) {
+        let start = Self::get_time();
         self.reduce(None);
-        let mut to_test = self.domains.clone();
         for i in 0..self.domains.len() {
-            for j in to_test[i] {
+            unsure[i] = unsure[i] & self.domains[i];
+        }
+        for i in 0..self.domains.len() {
+            for j in unsure[i] {
                 let mut copy = self.clone();
                 copy.domains[i] = DomainSet::singleton(j);
-                if copy.solve_with(Some(i), &to_test) {
+                if copy.solve_with(Some(i), &unsure) {
                     for (i, d) in copy.domains.iter().enumerate() {
-                        to_test[i].remove_all(*d);
+                        unsure[i].remove_all(*d);
                     }
                 } else {
                     self.domains[i].remove(j);
                 }
+                let elapsed_time = Self::get_time() - start;
+                if elapsed_time > timeout {
+                    return;
+                }
             }
         }
+    }
+
+    fn minimize(&mut self) {
+        let mut unsure = self.domains.clone();
+        self.minimize_for(&mut unsure, u64::MAX);
     }
 }

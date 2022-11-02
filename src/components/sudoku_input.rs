@@ -67,10 +67,10 @@ pub struct Props<const N: usize> {
     pub sudoku: Sudoku<N>,
     #[prop_or(empty_domains())]
     pub domains: SudokuDomains<N>,
+    #[prop_or(empty_domains())]
+    pub unsure: SudokuDomains<N>,
     #[prop_or(false)]
     pub working: bool,
-    #[prop_or(false)]
-    pub reducing: bool,
     pub on_change: Callback<Sudoku<N>>,
 }
 
@@ -80,8 +80,8 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
         children,
         sudoku,
         domains,
+        unsure,
         working,
-        reducing,
         on_change,
     } = props;
     let selected = use_state_eq(|| None);
@@ -138,9 +138,6 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
     if *working {
         grid_classes.push("sudoku-working");
     }
-    if *reducing {
-        grid_classes.push("sudoku-reducing");
-    }
     html! {
         <div class="sudoku-input-wrapper">
             <div class={classes!("sudoku-grid-wrapper", grid_classes)}>
@@ -167,7 +164,15 @@ pub fn sudoku_input<const N: usize>(props: &Props<N>) -> Html {
                                     onfocus={onfocus(r, c)}
                                 >
                                     <div class={classes!("sudoku-cell-result", format!("sudoku-results-{}", domains[r][c].len()))}>
-                                        { domains[r][c].clone().map(|e| html!{ <div>{format!("{:X}", (e + 1) & 0xf)}</div> }).collect::<Html>() }
+                                        { domains[r][c].clone().map(|e| html!{
+                                            <div class={classes!(
+                                                if unsure[r][c].contains(e) {
+                                                    "sudoku-result-unsure"
+                                                } else {
+                                                    "sudoku-result-sure"
+                                                }
+                                            )}>{format!("{:X}", (e + 1) & 0xf)}</div>
+                                        }).collect::<Html>() }
                                     </div>
                                     <div class="sudoku-cell-input" tabindex="0" type="number" ref={cells[r][c].clone()}>{
                                         if let Some(v) = sudoku[r][c] {

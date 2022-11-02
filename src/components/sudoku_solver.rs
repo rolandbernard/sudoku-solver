@@ -4,16 +4,17 @@ use yew_agent::{Bridge, Bridged};
 
 use crate::components::sudoku_input::SudokuInput;
 use crate::solver::domain::DomainSet;
-use crate::solver::sudoku::{default_domains, empty_sudoku, sudoku_domains, Sudoku, SudokuDomains};
-use crate::workers::{MinimizingWorker, ReducingWorker, SolvingWorker};
+use crate::solver::sudoku::{
+    default_domains, empty_domains, empty_sudoku, sudoku_domains, Sudoku, SudokuDomains,
+};
+use crate::workers::{MinimizingWorker, SolvingWorker};
 
 pub enum SolverMessage<const N: usize> {
     Change(Sudoku<N>),
     Solve,
     Clear,
     Solved(Option<Sudoku<N>>, usize),
-    Reduced(SudokuDomains<N>, usize),
-    Minimized(SudokuDomains<N>, usize),
+    Minimized(SudokuDomains<N>, SudokuDomains<N>, usize),
     Undo,
     Redo,
 }
@@ -22,8 +23,8 @@ pub enum SolverMessage<const N: usize> {
 pub struct SudokuHistoryItem<const N: usize> {
     sudoku: Sudoku<N>,
     domains: SudokuDomains<N>,
+    unsure: SudokuDomains<N>,
     change: usize,
-    prog: i32,
     solved: Option<bool>,
 }
 
@@ -32,8 +33,18 @@ impl<const N: usize> SudokuHistoryItem<N> {
         SudokuHistoryItem {
             sudoku: empty_sudoku(),
             domains: default_domains(),
+            unsure: empty_domains(),
             change: 0,
-            prog: 2,
+            solved: None,
+        }
+    }
+
+    fn new(sudoku: Sudoku<N>, domains: SudokuDomains<N>) -> Self {
+        SudokuHistoryItem {
+            sudoku: sudoku,
+            domains: domains,
+            unsure: domains,
+            change: 0,
             solved: None,
         }
     }
@@ -48,10 +59,8 @@ where
     hist_pos: usize,
     change: usize,
     solving: Option<usize>,
-    reducing: Option<usize>,
     minimizing: Option<usize>,
     minimize_bridge: Box<dyn Bridge<MinimizingWorker<N>>>,
-    reduce_bridge: Box<dyn Bridge<ReducingWorker<N>>>,
     solver_bridge: Box<dyn Bridge<SolvingWorker<N>>>,
 }
 
@@ -99,12 +108,10 @@ where
         if self.current_history().solved == Some(false) {
             return true;
         }
-        if self.current_history().prog == 2 {
-            for row in self.current_history().domains {
-                for cel in row {
-                    if cel.is_empty() {
-                        return true;
-                    }
+        for row in self.current_history().domains {
+            for cel in row {
+                if cel.is_empty() {
+                    return true;
                 }
             }
         }
@@ -112,20 +119,16 @@ where
     }
 
     fn has_multiple_solution(&self) -> bool {
-        if self.current_history().prog == 2 {
-            for row in self.current_history().domains {
-                for cel in row {
-                    if !cel.is_singleton() {
-                        return true;
-                    }
-                }
+        let SudokuHistoryItem {
+            domains, unsure, ..
+        } = self.current_history();
+        for (&d1, &d2) in domains.iter().flatten().zip(unsure.iter().flatten()) {
+            let sure = d1.without_all(d2);
+            if !sure.is_empty() && !sure.is_singleton() {
+                return true;
             }
         }
         return false;
-    }
-
-    fn is_reducing(&self) -> bool {
-        self.current_history().prog < 2
     }
 
     fn current_history(&self) -> &SudokuHistoryItem<N> {
@@ -137,20 +140,20 @@ where
     }
 
     fn start_domain_compute(&mut self) {
-        let domains = if self.current_history().prog < 0 {
-            sudoku_domains(&self.current_history().sudoku)
-        } else {
-            self.current_history().domains
-        };
-        if self.reducing == None && self.current_history().prog < 1 {
-            self.reducing = Some(self.current_history().change);
-            self.reduce_bridge
-                .send((domains, self.current_history().change));
-        }
-        if self.minimizing == None && self.current_history().prog < 2 {
+        if self.minimizing == None
+            && self
+                .current_history()
+                .unsure
+                .iter()
+                .flatten()
+                .any(|x| !x.is_empty())
+        {
             self.minimizing = Some(self.current_history().change);
-            self.minimize_bridge
-                .send((domains, self.current_history().change));
+            self.minimize_bridge.send((
+                self.current_history().domains,
+                self.current_history().unsure,
+                self.current_history().change,
+            ));
         }
     }
 
@@ -180,27 +183,18 @@ where
     fn history_push_sudoku(&mut self, sudoku: Sudoku<N>) {
         if sudoku != self.current_history().sudoku {
             for i in (0..self.history.len()).rev() {
-                if self.history[i].sudoku == sudoku && self.history[i].prog != -1 {
+                if self.history[i].sudoku == sudoku {
                     self.history_push(self.history[i].clone());
                     return;
                 }
             }
             if let Some(idx) = self.smallest_subset(&sudoku) {
-                self.history_push(SudokuHistoryItem {
+                self.history_push(SudokuHistoryItem::new(
                     sudoku,
-                    domains: adjust_domains(self.history[idx].domains, &sudoku),
-                    change: 0,
-                    prog: 0,
-                    solved: None,
-                })
+                    adjust_domains(self.history[idx].domains, &sudoku),
+                ));
             } else {
-                self.history_push(SudokuHistoryItem {
-                    sudoku,
-                    domains: self.current_history().domains,
-                    change: 0,
-                    prog: -1,
-                    solved: None,
-                })
+                self.history_push(SudokuHistoryItem::new(sudoku, sudoku_domains(&sudoku)));
             }
         }
     }
@@ -220,19 +214,14 @@ where
             hist_pos: 0,
             change: 0,
             solving: None,
-            reducing: None,
             minimizing: None,
             solver_bridge: SolvingWorker::bridge(
                 ctx.link()
                     .callback(|(sol, id)| Self::Message::Solved(sol, id)),
             ),
-            reduce_bridge: ReducingWorker::bridge(
-                ctx.link()
-                    .callback(|(sol, id)| Self::Message::Reduced(sol, id)),
-            ),
             minimize_bridge: MinimizingWorker::bridge(
                 ctx.link()
-                    .callback(|(sol, id)| Self::Message::Minimized(sol, id)),
+                    .callback(|(sol, uns, id)| Self::Message::Minimized(sol, uns, id)),
             ),
         }
     }
@@ -273,26 +262,13 @@ where
                     }
                 }
             }
-            Self::Message::Reduced(sol, id) => {
-                if self.reducing == Some(id) {
-                    self.reducing = None;
-                    for i in (0..self.history.len()).rev() {
-                        if self.history[i].change == id && self.history[i].prog < 1 {
-                            self.history[i].domains = sol;
-                            self.history[i].prog = 1;
-                            break;
-                        }
-                    }
-                }
-                self.start_domain_compute();
-            }
-            Self::Message::Minimized(sol, id) => {
+            Self::Message::Minimized(sol, uns, id) => {
                 if self.minimizing == Some(id) {
                     self.minimizing = None;
                     for i in (0..self.history.len()).rev() {
-                        if self.history[i].change == id && self.history[i].prog < 2 {
+                        if self.history[i].change == id {
                             self.history[i].domains = sol;
-                            self.history[i].prog = 2;
+                            self.history[i].unsure = uns;
                             break;
                         }
                     }
@@ -321,8 +297,8 @@ where
                 <SudokuInput<N>
                     sudoku={self.current_history().sudoku}
                     domains={self.current_history().domains}
+                    unsure={self.current_history().unsure}
                     working={self.solving != None}
-                    reducing={self.is_reducing()}
                     on_change={ctx.link().callback(|new| Self::Message::Change(new))}
                 >
                     <div class="info-text">{
