@@ -5,7 +5,8 @@ use yew_agent::{Bridge, Bridged};
 use crate::components::sudoku_input::SudokuInput;
 use crate::solver::domain::DomainSet;
 use crate::solver::sudoku::{
-    default_domains, empty_domains, empty_sudoku, sudoku_domains, Sudoku, SudokuDomains,
+    create_problem, default_domains, empty_domains, empty_sudoku, reshape_domains, sudoku_domains,
+    Sudoku, SudokuDomains,
 };
 use crate::workers::{MinimizingWorker, SolvingWorker};
 
@@ -40,6 +41,8 @@ impl<const N: usize> SudokuHistoryItem<N> {
     }
 
     fn new(sudoku: Sudoku<N>, domains: SudokuDomains<N>) -> Self {
+        let problem = create_problem(&domains);
+        let domains = reshape_domains(problem.reduced_domains());
         SudokuHistoryItem {
             sudoku: sudoku,
             domains: domains,

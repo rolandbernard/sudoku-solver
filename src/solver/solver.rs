@@ -1,4 +1,4 @@
-#[cfg(not(target_arch="wasm32"))]
+#[cfg(not(target_arch = "wasm32"))]
 use std::time::SystemTime;
 
 use crate::solver::domain::DomainSet;
@@ -41,16 +41,7 @@ impl Problem {
 
     pub fn find_model(&self) -> Option<Vec<u32>> {
         let mut state = ProblemState::from_problem(self);
-        if state.solve(None) {
-            return state.domains.into_iter().map(|v| v.get_any()).collect();
-        } else {
-            return None;
-        }
-    }
-
-    pub fn find_model_with(&self, prefer: &[DomainSet]) -> Option<Vec<u32>> {
-        let mut state = ProblemState::from_problem(self);
-        if state.solve_with(None, prefer) {
+        if state.solve() {
             return state.domains.into_iter().map(|v| v.get_any()).collect();
         } else {
             return None;
@@ -131,12 +122,7 @@ impl<'a> ProblemState<'a> {
         }
     }
 
-    fn reduce_constraint(
-        &mut self,
-        constr: &[usize],
-        changed: &mut bool,
-        changes: &mut DomainSet,
-    ) -> bool {
+    fn reduce_constraint(&mut self, constr: &[usize], changes: &mut DomainSet) -> bool {
         for (i, &v) in constr.iter().enumerate() {
             let old = self.domains[v];
             for j in self.domains[v] {
@@ -155,7 +141,6 @@ impl<'a> ProblemState<'a> {
                 for &c in &self.problem.constrained[v] {
                     changes.add(c as u32);
                 }
-                *changed = true;
             }
         }
         return true;
@@ -163,7 +148,6 @@ impl<'a> ProblemState<'a> {
 
     fn reduce(&mut self, i: Option<usize>) -> bool {
         let mut changes;
-        let mut changed = true;
         if let Some(i) = i {
             changes = DomainSet::empty();
             for &c in &self.problem.constrained[i] {
@@ -172,35 +156,33 @@ impl<'a> ProblemState<'a> {
         } else {
             changes = DomainSet::range(0..self.problem.constraints.len() as u32);
         }
-        while changed {
-            changed = false;
-            for (i, constr) in self.problem.constraints.iter().enumerate() {
-                if changes.contains(i as u32) {
-                    changes.remove(i as u32);
-                    if !self.reduce_constraint(constr, &mut changed, &mut changes) {
-                        self.domains = vec![DomainSet::empty(); self.domains.len()];
-                        return false;
-                    }
+        while !changes.is_empty() {
+            for i in changes.clone() {
+                if !self.reduce_constraint(&self.problem.constraints[i as usize], &mut changes) {
+                    self.domains = vec![DomainSet::empty(); self.domains.len()];
+                    return false;
                 }
+                changes.remove(i as u32);
             }
         }
         return true;
     }
 
-    fn solve(&mut self, i: Option<usize>) -> bool {
-        self.solve_with(i, &self.problem.domains)
+    fn solve(&mut self) -> bool {
+        if !self.reduce(None) {
+            return false;
+        } else {
+            return self.solve_with(&self.problem.domains);
+        }
     }
 
-    fn solve_with(&mut self, i: Option<usize>, prefer: &[DomainSet]) -> bool {
-        if !self.reduce(i) {
-            return false;
-        }
+    fn solve_with(&mut self, prefer: &[DomainSet]) -> bool {
         for (i, v) in self.domains.iter().enumerate() {
             if !v.is_singleton() {
                 for j in (*v & prefer[i]).chain(v.without_all(prefer[i])) {
                     let mut copy = self.clone();
                     copy.domains[i] = DomainSet::singleton(j);
-                    if copy.solve_with(Some(i), prefer) {
+                    if copy.reduce(Some(i)) && copy.solve_with(prefer) {
                         self.domains = copy.domains;
                         return true;
                     }
@@ -211,14 +193,17 @@ impl<'a> ProblemState<'a> {
         return true;
     }
 
-    #[cfg(target_arch="wasm32")]
+    #[cfg(target_arch = "wasm32")]
     fn get_time() -> u64 {
         js_sys::Date::now() as u64
     }
-    
-    #[cfg(not(target_arch="wasm32"))]
+
+    #[cfg(not(target_arch = "wasm32"))]
     fn get_time() -> u64 {
-        SystemTime::now().duration_since(SystemTime::UNIX_EPOCH).unwrap().as_millis() as u64
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64
     }
 
     fn minimize_for(&mut self, unsure: &mut [DomainSet], timeout: u64) {
@@ -226,17 +211,18 @@ impl<'a> ProblemState<'a> {
         self.reduce(None);
         for i in 0..self.domains.len() {
             unsure[i] = unsure[i] & self.domains[i];
-        }
-        for i in 0..self.domains.len() {
             for j in unsure[i] {
-                let mut copy = self.clone();
-                copy.domains[i] = DomainSet::singleton(j);
-                if copy.solve_with(Some(i), &unsure) {
-                    for (i, d) in copy.domains.iter().enumerate() {
-                        unsure[i].remove_all(*d);
+                if self.domains[i].contains(j) {
+                    let mut copy = self.clone();
+                    copy.domains[i] = DomainSet::singleton(j);
+                    if copy.reduce(Some(i)) && copy.solve_with(&unsure) {
+                        for (i, d) in copy.domains.iter().enumerate() {
+                            unsure[i].remove_all(*d);
+                        }
+                    } else {
+                        self.domains[i].remove(j);
+                        self.reduce(Some(i));
                     }
-                } else {
-                    self.domains[i].remove(j);
                 }
                 let elapsed_time = Self::get_time() - start;
                 if elapsed_time > timeout {
