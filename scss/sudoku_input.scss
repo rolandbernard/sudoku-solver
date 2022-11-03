@@ -117,6 +117,14 @@
                     right: min(0.1vw, 0.1vh);
                     bottom: min(0.1vw, 0.1vh);
                     align-content: center;
+
+                    &.sudoku-results-16, &.sudoku-results-15, &.sudoku-results-14, &.sudoku-results-13,
+                    &.sudoku-results-12, &.sudoku-results-11, &.sudoku-results-10 {
+                        font-size: min(1.0vw, 0.9vh);
+                        div {
+                            width: 25%;
+                        }
+                    }
                 
                     &.sudoku-results-9, &.sudoku-results-0, &.sudoku-results-8, &.sudoku-results-7 {
                         font-size: min(1.3vw, 1.08vh);
@@ -159,6 +167,10 @@
                     transition: all 100ms linear;
                     overflow: hidden;
                     user-select: none;
+                
+                    .sudoku-result-unsure {
+                        color: vars.$lightertext;
+                    }
 
                     div {
                         display: flex;
@@ -166,11 +178,6 @@
                         justify-content: center;
                         width: 30%;
                         transition: all 100ms linear;
-                    }
-
-                    &.sudoku-results-16, &.sudoku-results-15, &.sudoku-results-14, &.sudoku-results-13,
-                    &.sudoku-results-12, &.sudoku-results-11, &.sudoku-results-10 {
-                        display: none;
                     }
                     
                     &.sudoku-results-4, &.sudoku-results-3, &.sudoku-results-2 {
