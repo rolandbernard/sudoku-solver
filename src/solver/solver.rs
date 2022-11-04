@@ -1,5 +1,9 @@
 #[cfg(not(target_arch = "wasm32"))]
 use std::time::SystemTime;
+use std::{
+    collections::hash_map::DefaultHasher,
+    hash::{Hash, Hasher},
+};
 
 use crate::solver::domain::DomainSet;
 
@@ -71,6 +75,43 @@ impl Problem {
     }
 }
 
+struct Random {
+    state: u128,
+}
+
+impl Random {
+    fn new() -> Self {
+        Random {
+            state: Self::get_time() as u128 | (Self::get_time() as u128) << 64,
+        }
+    }
+
+    #[cfg(target_arch = "wasm32")]
+    fn get_time() -> u64 {
+        js_sys::Date::now() as u64
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn get_time() -> u64 {
+        SystemTime::now()
+            .duration_since(SystemTime::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as u64
+    }
+
+    fn get_random(&mut self) -> usize {
+        let mut hash = DefaultHasher::new();
+        self.state.hash(&mut hash);
+        let h1 = hash.finish();
+        self.state.hash(&mut hash);
+        let h2 = hash.finish();
+        self.state.hash(&mut hash);
+        let h3 = hash.finish();
+        self.state = h1 as u128 | (h2 as u128) << 64;
+        return h3 as usize;
+    }
+}
+
 #[derive(Clone)]
 struct ProblemState<'a> {
     problem: &'a Problem,
@@ -80,12 +121,12 @@ struct ProblemState<'a> {
 impl<'a> ProblemState<'a> {
     fn from_problem(problem: &'a Problem) -> Self {
         ProblemState {
-            problem: problem,
+            problem,
             domains: problem.domains.clone(),
         }
     }
 
-    fn reduce_singletons(
+    fn is_constr_satisfiable(
         &self,
         constr: &[usize],
         mut remove: DomainSet,
@@ -110,23 +151,24 @@ impl<'a> ProblemState<'a> {
             }
         }
         let mut without = DomainSet::empty();
+        left = 0;
         for (i, &w) in constr.iter().enumerate() {
             if !taken.contains(i as u32) {
+                left += 1;
                 without.add_all(self.domains[w]);
+                if without.without_all(remove).len() < left {
+                    return false;
+                }
             }
         }
-        if without.without_all(remove).len() < left {
-            return false;
-        } else {
-            return true;
-        }
+        return true;
     }
 
     fn reduce_constraint(&mut self, constr: &[usize], changes: &mut DomainSet) -> bool {
         for (i, &v) in constr.iter().enumerate() {
             let old = self.domains[v];
             for j in self.domains[v] {
-                if !self.reduce_singletons(
+                if !self.is_constr_satisfiable(
                     constr,
                     DomainSet::singleton(j),
                     DomainSet::singleton(i as u32),
@@ -158,73 +200,122 @@ impl<'a> ProblemState<'a> {
         }
         while !changes.is_empty() {
             for i in changes.clone() {
+                changes.remove(i as u32);
                 if !self.reduce_constraint(&self.problem.constraints[i as usize], &mut changes) {
                     self.domains = vec![DomainSet::empty(); self.domains.len()];
                     return false;
                 }
-                changes.remove(i as u32);
             }
         }
         return true;
     }
 
     fn solve(&mut self) -> bool {
-        if !self.reduce(None) {
-            return false;
-        } else {
-            return self.solve_with(&self.problem.domains);
-        }
+        return self.reduce(None)
+            && self
+                .solve_with(
+                    &mut Random::new(),
+                    &self.problem.domains,
+                    &mut None,
+                    &mut usize::MAX.clone(),
+                )
+                .unwrap_or(false);
     }
 
-    fn solve_with(&mut self, prefer: &[DomainSet]) -> bool {
-        for (i, v) in self.domains.iter().enumerate() {
-            if !v.is_singleton() {
-                for j in (*v & prefer[i]).chain(v.without_all(prefer[i])) {
-                    let mut copy = self.clone();
-                    copy.domains[i] = DomainSet::singleton(j);
-                    if copy.reduce(Some(i)) && copy.solve_with(prefer) {
-                        self.domains = copy.domains;
-                        return true;
+    fn solve_selecting(
+        &mut self,
+        random: &mut Random,
+        prefer: &[DomainSet],
+        backtracked_on: &mut Option<usize>,
+        backtracked_count: &mut usize,
+        i: usize,
+    ) -> Option<bool> {
+        if *backtracked_count == 0 {
+            return None;
+        } else {
+            let v = self.domains[i];
+            for j in (v & prefer[i]).chain(v.without_all(prefer[i])) {
+                let mut copy = self.clone();
+                copy.domains[i] = DomainSet::singleton(j);
+                if copy.reduce(Some(i)) {
+                    if let Some(result) =
+                        copy.solve_with(random, prefer, backtracked_on, backtracked_count)
+                    {
+                        if result {
+                            self.domains = copy.domains;
+                            return Some(true);
+                        }
+                    } else {
+                        return None;
                     }
                 }
-                return false;
             }
+            if *backtracked_on == None {
+                *backtracked_on = Some(i);
+            }
+            if *backtracked_count > 0 {
+                *backtracked_count -= 1;
+            }
+            return Some(false);
         }
-        return true;
     }
 
-    #[cfg(target_arch = "wasm32")]
-    fn get_time() -> u64 {
-        js_sys::Date::now() as u64
-    }
-
-    #[cfg(not(target_arch = "wasm32"))]
-    fn get_time() -> u64 {
-        SystemTime::now()
-            .duration_since(SystemTime::UNIX_EPOCH)
-            .unwrap()
-            .as_millis() as u64
+    fn solve_with(
+        &mut self,
+        random: &mut Random,
+        prefer: &[DomainSet],
+        backtracked_on: &mut Option<usize>,
+        backtracked_count: &mut usize,
+    ) -> Option<bool> {
+        if let Some(i) = *backtracked_on {
+            return self.solve_selecting(random, prefer, &mut None, backtracked_count, i);
+        } else {
+            let off = random.get_random() % self.domains.len();
+            for i in (off..self.domains.len()).chain(0..off) {
+                let v = self.domains[i];
+                if !v.is_singleton() {
+                    return self.solve_selecting(
+                        random,
+                        prefer,
+                        backtracked_on,
+                        backtracked_count,
+                        i,
+                    );
+                }
+            }
+            return Some(true);
+        }
     }
 
     fn minimize_for(&mut self, unsure: &mut [DomainSet], timeout: u64) {
-        let start = Self::get_time();
-        self.reduce(None);
-        for i in 0..self.domains.len() {
-            unsure[i] = unsure[i] & self.domains[i];
+        let start = Random::get_time();
+        let mut random = Random::new();
+        let off = random.get_random() % self.domains.len();
+        for i in (off..self.domains.len()).chain(0..off) {
+            unsure[i].retain_all(self.domains[i]);
             for j in unsure[i] {
                 if self.domains[i].contains(j) {
                     let mut copy = self.clone();
                     copy.domains[i] = DomainSet::singleton(j);
-                    if copy.reduce(Some(i)) && copy.solve_with(&unsure) {
-                        for (i, d) in copy.domains.iter().enumerate() {
-                            unsure[i].remove_all(*d);
+                    let result = Some(self.reduce(Some(i))).and_then(|x| {
+                        if x {
+                            copy.solve_with(&mut random, &unsure, &mut None, &mut 128)
+                        } else {
+                            Some(false)
                         }
-                    } else {
-                        self.domains[i].remove(j);
-                        self.reduce(Some(i));
+                    });
+                    if let Some(solved) = result {
+                        if solved {
+                            for (i, &d) in copy.domains.iter().enumerate() {
+                                unsure[i].remove_all(d);
+                            }
+                        } else {
+                            self.domains[i].remove(j);
+                            self.reduce(Some(i));
+                        }
                     }
                 }
-                let elapsed_time = Self::get_time() - start;
+                let elapsed_time = Random::get_time() - start;
                 if elapsed_time > timeout {
                     return;
                 }
@@ -233,6 +324,7 @@ impl<'a> ProblemState<'a> {
     }
 
     fn minimize(&mut self) {
+        self.reduce(None);
         let mut unsure = self.domains.clone();
         self.minimize_for(&mut unsure, u64::MAX);
     }

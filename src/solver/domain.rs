@@ -1,9 +1,18 @@
 use serde::{Deserialize, Serialize};
-use std::ops::{BitAnd, BitOr, Not, Range};
+use std::{
+    fmt::Debug,
+    ops::{BitAnd, BitOr, Not, Range},
+};
 
 #[derive(Clone, Copy, Serialize, Deserialize, PartialEq)]
 pub struct DomainSet {
     bitset: u64,
+}
+
+impl Debug for DomainSet {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_set().entries(self.clone()).finish()
+    }
 }
 
 impl DomainSet {
