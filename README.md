@@ -5,6 +5,11 @@ Sudoku solver
 This is a very simple web app for solving Sudoku problems.
 This is more just an experiment for me to try out the [Yew](https://yew.rs/) framework.
 
+## Demo
+
+* Normal Sudoku: https://rolandbernard.github.io/sudoku-solver/
+* 16x16 "Sudoku": https://rolandbernard.github.io/sudoku-solver/16
+
 ## Development
 
 You will have to install [Cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html)
