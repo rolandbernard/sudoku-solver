@@ -138,7 +138,6 @@
                     left: min(0.1vw, 0.1vh);
                     right: min(0.1vw, 0.1vh);
                     bottom: min(0.1vw, 0.1vh);
-                    align-content: center;
 
                     &.sudoku-results-16,
                     &.sudoku-results-15,
@@ -200,6 +199,7 @@
                     flex-flow: row wrap;
                     align-items: center;
                     justify-content: center;
+                    align-content: space-around;
                     overflow: hidden;
                     user-select: none;
                     contain: strict;
@@ -208,8 +208,8 @@
                         display: flex;
                         align-items: center;
                         justify-content: center;
-                        width: 30%;
-                        height: 30%;
+                        width: 33%;
+                        height: 33%;
                         contain: strict;
 
                         &.sudoku-result-sure {
@@ -225,14 +225,14 @@
                     &.sudoku-results-3,
                     &.sudoku-results-2 {
                         div {
-                            width: 45%;
-                            height: 45%;
+                            width: 50%;
+                            height: 50%;
                         }
                     }
 
                     &.sudoku-results-1 div {
-                        width: 90%;
-                        height: 90%;
+                        width: 100%;
+                        height: 100%;
                     }
                 }
 
