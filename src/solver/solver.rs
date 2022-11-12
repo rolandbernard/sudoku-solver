@@ -211,15 +211,18 @@ impl<'a> ProblemState<'a> {
     }
 
     fn solve(&mut self) -> bool {
-        return self.reduce(None)
-            && self
-                .solve_with(
-                    &mut Random::new(),
-                    &self.problem.domains,
-                    &mut None,
-                    &mut usize::MAX.clone(),
-                )
-                .unwrap_or(false);
+        if !self.reduce(None) {
+            return false;
+        } else {
+            for mut i in (0..).map(|x| 32 * 2usize.pow(x)) {
+                if let Some(res) =
+                    self.solve_with(&mut Random::new(), &self.problem.domains, &mut None, &mut i)
+                {
+                    return res;
+                }
+            }
+            unreachable!()
+        }
     }
 
     fn solve_selecting(
