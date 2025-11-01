@@ -7,8 +7,8 @@ This is more just an experiment for me to try out the [Yew](https://yew.rs/) fra
 
 ## Demo
 
-* Normal Sudoku: https://rolandbernard.github.io/sudoku-solver/
-* 16x16 "Sudoku": https://rolandbernard.github.io/sudoku-solver/16
+* Normal Sudoku: https://sudoku.rolandb.com/
+* 16x16 "Sudoku": https://sudoku.rolandb.com/sudoku-solver/16
 
 ## Development
 
